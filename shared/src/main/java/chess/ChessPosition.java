@@ -33,8 +33,8 @@ public class ChessPosition {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ChessPosition rhs) {
-            return (rhs.getRow() == this.getRow()) && (rhs.getColumn() == this.getColumn());
+        if (obj instanceof ChessPosition that) {
+            return (that.getRow() == this.getRow()) && (that.getColumn() == this.getColumn());
         } else {
             return false;
         }

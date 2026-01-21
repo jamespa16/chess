@@ -15,7 +15,6 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         color = pieceColor;
         this.type = type;
-
     }
 
     /**
@@ -64,7 +63,7 @@ public class ChessPiece {
         }
 
         switch (type) {
-            case KING: // can always move in a square around it
+            case KING: // can always move in a square around it, except for squares occupied by other same-team pieces
                 for (int i = -1; i < 2; i++) {
                     for (int j = -1; j < 2; j++) {
                         ChessPosition potential = new ChessPosition(y+j, x+i);
@@ -82,10 +81,10 @@ public class ChessPiece {
                 diagonalMovementHelper(board, x, y, newPos);
                 // row - a == y && col - a == x
                 break;
-            case BISHOP:
+            case BISHOP: // can move in a diagonal up to a piece
                 diagonalMovementHelper(board, x, y, newPos);
                 break;
-            case KNIGHT:
+            case KNIGHT: // can move in an L shape, over pieces. presently hard-coded.
                 int[][] potentialMoves = {
                         {x + 2, y + 1},
                         {x + 2, y - 1},
@@ -106,10 +105,10 @@ public class ChessPiece {
                     }
                 }
                 break;
-            case ROOK:
+            case ROOK: // can move horizontally or vertically up to a piece.
                 colRowMovementHelper(board, x, y, newPos);
                 break;
-            case PAWN:
+            case PAWN: // can move one square forwards, except on starting row, where it can move two. attacks to the side.
                 int startingRow = 2;
                 if (color == ChessGame.TeamColor.BLACK) {
                     startingRow = 7;
@@ -127,7 +126,6 @@ public class ChessPiece {
                             }
                         }
                     }
-
                 }
                 ChessPosition[] attackPositions = {new ChessPosition(y+direction, x+1), new ChessPosition(y+direction, x-1)};
                 for (ChessPosition attack : attackPositions) {
@@ -155,6 +153,14 @@ public class ChessPiece {
         return newMoves;
     }
 
+    /**
+     * Determines if a square is unoccupied (or has an opposing team piece on it), and if so, adds the square to potential moves.
+     * @param board the board to consider
+     * @param newPos the list of potential positions to add to.
+     * @param direction a true/false reference to whether the current direction is obstructed
+     * @param potential the square to consider
+     * @return if the square poses an obstacle.
+     */
     private boolean isUnobstructed(ChessBoard board, List<ChessPosition> newPos, boolean direction, ChessPosition potential) {
         ChessPiece obstacle = board.getPiece(potential);
         if (obstacle != null && obstacle.getTeamColor() != color) {
@@ -168,6 +174,14 @@ public class ChessPiece {
         return direction;
     }
 
+    /**
+     * Iterates through the possible positions in horizontal and vertical directions, like that of the Rook or Queen.
+     * Starts at the piece, and then moves outward in a circle to check squares. Each valid square gets added to the list.
+     * @param board the board to consider
+     * @param x the column value of the current piece
+     * @param y the row value of the current piece
+     * @param newPos the list of possible moves to add to.
+     */
     private void colRowMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
         boolean up = true;
         boolean down = true;
@@ -197,6 +211,14 @@ public class ChessPiece {
         }
     }
 
+    /**
+     * Iterates through the possible positions in diagonal directions, like that of the Bishop or Queen.
+     * Starts at the piece, and then moves outwards in a circle to check squares. Each valid square gets added to the list.
+     * @param board the board to consider
+     * @param x the column value of the current piece
+     * @param y the row value of the current piece
+     * @param newPos the list of possible moves to add to.
+     */
     private void diagonalMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
         boolean upLeft = true;
         boolean upRight = true;

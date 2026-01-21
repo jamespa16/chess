@@ -105,7 +105,6 @@ public class ChessBoard {
                 }
             }
         }
-
         return true;
     }
 
