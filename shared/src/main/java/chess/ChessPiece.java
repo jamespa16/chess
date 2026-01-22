@@ -53,6 +53,40 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        int x = myPosition.getColumn();
+        int y = myPosition.getRow();
+        List<ChessPosition> newPos = new ArrayList<>();
+
+        int endOfBoard = 8;
+        int direction = 1;
+        if (color == ChessGame.TeamColor.BLACK) {
+            endOfBoard = 1;
+            direction = -1;
+        }
+
+        switch (type) {
+            case KING: // can always move in a square around it
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    ChessPosition potential = new ChessPosition(y+j, x+i);
+                    if (potential.getColumn() < 9 && potential.getColumn() > 0 && potential.getRow() < 9 && potential.getRow() > 0) {
+                        ChessPiece obstacle = board.getPiece(potential);
+                        if (obstacle == null || obstacle.getTeamColor() != color) {
+                            newPos.add(potential);
+                        }
+                    }
+                }
+            }
+            case QUEEN:
+                break;
+            case BISHOP:
+                break;
+            case KNIGHT:
+                break;
+            case ROOK:
+                break;
+            case PAWN:
+                break;
+        }
     }
 }
