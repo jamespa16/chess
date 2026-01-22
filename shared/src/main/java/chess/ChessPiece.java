@@ -78,7 +78,9 @@ public class ChessPiece {
                 }
             }
             case QUEEN:
-                break;
+                rowMovementHelper(board, x, y, newPos);
+                colMovementHelper(board, x, y, newPos);
+                diagonalMovementHelper(board, x, y, newPos);
             case BISHOP:
                 diagonalMovementHelper(board, x, y, newPos);
             case KNIGHT:
