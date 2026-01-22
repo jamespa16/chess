@@ -2,7 +2,9 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a single chess piece
@@ -66,23 +68,25 @@ public class ChessPiece {
 
         switch (type) {
             case KING: // can always move in a square around it
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    ChessPosition potential = new ChessPosition(y+j, x+i);
-                    if (potential.getColumn() < 9 && potential.getColumn() > 0 && potential.getRow() < 9 && potential.getRow() > 0) {
-                        ChessPiece obstacle = board.getPiece(potential);
-                        if (obstacle == null || obstacle.getTeamColor() != color) {
-                            newPos.add(potential);
+                for (int i = -1; i < 2; i++) {
+                    for (int j = -1; j < 2; j++) {
+                        ChessPosition potential = new ChessPosition(y+j, x+i);
+                        if (potential.getColumn() < 9 && potential.getColumn() > 0 && potential.getRow() < 9 && potential.getRow() > 0) {
+                            ChessPiece obstacle = board.getPiece(potential);
+                            if (obstacle == null || obstacle.getTeamColor() != color) {
+                                newPos.add(potential);
+                            }
                         }
                     }
                 }
-            }
-            case QUEEN:
-                rowMovementHelper(board, x, y, newPos);
-                colMovementHelper(board, x, y, newPos);
+                break;
+            case QUEEN: // can move diagonal / straight if unobstructed
+                colRowMovementHelper(board, x, y, newPos);
                 diagonalMovementHelper(board, x, y, newPos);
+                break;
             case BISHOP:
                 diagonalMovementHelper(board, x, y, newPos);
+                break;
             case KNIGHT:
                 int[][] potentialMoves = {
                         {x + 2, y + 1},
@@ -96,13 +100,18 @@ public class ChessPiece {
                 };
 
                 for (int[] move : potentialMoves) {
-                    if (move[0] > 0 && move[0] < 9) {
-                        newPos.add(new ChessPosition(move[1], move[0]));
+                    ChessPosition potentialMove = new ChessPosition(move[1], move[0]);
+                    ChessPiece potentialObstacle = board.getPiece(potentialMove);
+                    boolean isNotObstacle = potentialObstacle == null || potentialObstacle.getTeamColor() != color;
+                    boolean isInBounds = move[0] < 9 && move[0] > 0 && move[1] < 9 && move[1] > 0;
+                    if (isNotObstacle && isInBounds) {
+                        newPos.add(potentialMove);
                     }
                 }
+                break;
             case ROOK:
-                rowMovementHelper(board, x, y, newPos);
-                colMovementHelper(board, x, y, newPos);
+                colRowMovementHelper(board, x, y, newPos);
+                break;
             case PAWN:
                 int startingRow = 2;
                 if (color == ChessGame.TeamColor.BLACK) {
@@ -111,10 +120,18 @@ public class ChessPiece {
                 if (y == endOfBoard) {
                     break;
                 } else {
-                    newPos.add(new ChessPosition(y + direction, x));
-                    if (y == startingRow) {
-                        newPos.add(new ChessPosition(y + (2 * direction), x));
+                    ChessPosition potential = new ChessPosition(y + direction, x);
+                    if (board.getPiece(potential) == null) {
+                        newPos.add(potential);
+                        if (y == startingRow) {
+                            ChessPosition secondPotential = new ChessPosition(y + 2 * direction, x);
+                            if (board.getPiece(secondPotential) == null) {
+                                newPos.add(secondPotential);
+                            }
+                        }
                     }
+
+
                 }
 
                 ChessPosition[] attackPositions = {new ChessPosition(y+direction, x+1), new ChessPosition(y+direction, x-1)};
@@ -124,9 +141,10 @@ public class ChessPiece {
                         newPos.add(attack);
                     }
                 }
+                break;
         }
 
-        List<ChessMove> newMoves = new ArrayList<>();
+        Set<ChessMove> newMoves = new HashSet<>();
         for (ChessPosition pos : newPos) {
             if (newPos.get(1).getRow() == endOfBoard) {
                 newMoves.add(new ChessMove(myPosition, pos, PieceType.QUEEN));
@@ -142,102 +160,87 @@ public class ChessPiece {
         return newMoves;
     }
 
+    private boolean isUnobstructed(ChessBoard board, List<ChessPosition> newPos, boolean direction, ChessPosition potential) {
+        ChessPiece obstacle = board.getPiece(potential);
+        if (obstacle != null && obstacle.getTeamColor() != color) {
+            newPos.add(potential);
+            direction = false;
+        } else if (obstacle != null) {
+            direction = false;
+        } else {
+            newPos.add(potential);
+        }
+        return direction;
+    }
+
+    private void colRowMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        boolean up = true;
+        boolean down = true;
+        boolean left = true;
+        boolean right = true;
+
+        for (int i = 1; i < 9; i++) {
+            if (x+i < 9 && up) {
+                ChessPosition potential = new ChessPosition(y, x + i);
+                up = isUnobstructed(board, newPos, up, potential);
+            }
+
+            if (x-i > 0 && down) {
+                ChessPosition potential = new ChessPosition(y, x - i);
+                down = isUnobstructed(board, newPos, down, potential);
+            }
+
+            if (y+i < 9 && right) {
+                ChessPosition potential = new ChessPosition(y+i, x);
+                right = isUnobstructed(board, newPos, right, potential);
+            }
+
+            if (y-i > 0 && left) {
+                ChessPosition potential = new ChessPosition(y-i, x);
+                left = isUnobstructed(board, newPos, left, potential);
+            }
+        }
+    }
+
     private void diagonalMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
         boolean upLeft = true;
         boolean upRight = true;
         boolean downLeft = true;
         boolean downRight = true;
-        for(int i = 0; i < 9; i++) {
+
+        for(int i = 1; i < 9; i++) {
             if(i + x < 9 && i + y < 9 && upRight) {
                 ChessPosition potential = new ChessPosition(y+i, x+i);
-                if (board.getPiece(potential) == null) {
-                    newPos.add(potential);
-                } else {
-                    upRight = false;
-                }
+                upRight = isUnobstructed(board, newPos, upRight, potential);
             }
 
             if(i + x < 9 && y - i > 0 && downRight) {
                 ChessPosition potential = new ChessPosition(y-i, x+i);
-                if (board.getPiece(potential) == null) {
-                    newPos.add(potential);
-                } else {
-                    downRight = false;
-                }
+                downRight = isUnobstructed(board, newPos, downRight, potential);
             }
 
             if(x - i > 0 && i + y < 9 && upLeft) {
                 ChessPosition potential = new ChessPosition(y+i, x-i);
-                if (board.getPiece(potential) == null) {
-                    newPos.add(potential);
-                } else {
-                    upLeft = false;
-                }
+                upLeft = isUnobstructed(board, newPos, upLeft, potential);
             }
 
             if(x - i > 0 && y - i > 0 && downLeft) {
                 ChessPosition potential = new ChessPosition(y-i, x-i);
-                if (board.getPiece(potential) == null) {
-                    newPos.add(potential);
-                } else {
-                    downLeft = false;
-                }
+                downLeft = isUnobstructed(board, newPos, downLeft, potential);
             }
         }
     }
 
-    private void colMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        colDownMovementHelper(board, x, y, newPos);
-        colUpMovementHelper(board, x, y, newPos);
-    }
-
-    private void colUpMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        for (int i = 1; y + i > 9; i++) {
-            var potential = new ChessPosition(y + i, x);
-            if (board.getPiece(potential) != null) {
-                break;
-            } else {
-                newPos.add(potential);
-            }
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof ChessPiece that) {
+            return this.getPieceType() == that.getPieceType() && this.getTeamColor() == that.getTeamColor();
         }
+        return false;
     }
 
-    private void colDownMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        for (int i = 1; y - i > 0; i++) {
-            var potential = new ChessPosition(y - i, x);
-            if (board.getPiece(potential) != null) {
-                break;
-            } else {
-                newPos.add(potential);
-            }
-        }
+    @Override
+    public int hashCode() {
+        return getPieceType().hashCode() + getTeamColor().hashCode();
     }
-
-    private void rowLeftMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        for (int i = 1; x - i > 0; i++) {
-            var potential = new ChessPosition(y, x - i);
-            if (board.getPiece(potential) != null) {
-                break;
-            } else {
-                newPos.add(potential);
-            }
-        }
-    }
-
-    private void rowRightMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        for (int i = 1; x + i > 9; i++) {
-            var potential = new ChessPosition(y, x + i);
-            if (board.getPiece(potential) != null) {
-                break;
-            } else {
-                newPos.add(potential);
-            }
-        }
-    }
-
-    private void rowMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
-        rowLeftMovementHelper(board, x, y, newPos);
-        rowRightMovementHelper(board, x, y, newPos);
-    }
-
 }
