@@ -84,7 +84,22 @@ public class ChessPiece {
             case BISHOP:
                 diagonalMovementHelper(board, x, y, newPos);
             case KNIGHT:
-                break;
+                int[][] potentialMoves = {
+                        {x + 2, y + 1},
+                        {x + 2, y - 1},
+                        {x - 2, y + 1},
+                        {x - 2, y - 1},
+                        {x + 1, y + 2},
+                        {x + 1, y - 2},
+                        {x - 1, y + 2},
+                        {x - 1, y - 2}
+                };
+
+                for (int[] move : potentialMoves) {
+                    if (move[0] > 0 && move[0] < 9) {
+                        newPos.add(new ChessPosition(move[1], move[0]));
+                    }
+                }
             case ROOK:
                 rowMovementHelper(board, x, y, newPos);
                 colMovementHelper(board, x, y, newPos);
