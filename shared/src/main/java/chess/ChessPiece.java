@@ -104,7 +104,26 @@ public class ChessPiece {
                 rowMovementHelper(board, x, y, newPos);
                 colMovementHelper(board, x, y, newPos);
             case PAWN:
-                break;
+                int startingRow = 2;
+                if (color == ChessGame.TeamColor.BLACK) {
+                    startingRow = 7;
+                }
+                if (y == endOfBoard) {
+                    break;
+                } else {
+                    newPos.add(new ChessPosition(y + direction, x));
+                    if (y == startingRow) {
+                        newPos.add(new ChessPosition(y + (2 * direction), x));
+                    }
+                }
+
+                ChessPosition[] attackPositions = {new ChessPosition(y+direction, x+1), new ChessPosition(y+direction, x-1)};
+                for (ChessPosition attack : attackPositions) {
+                    ChessPiece potentialAttack = board.getPiece(attack);
+                    if (potentialAttack != null && potentialAttack.color != this.color) {
+                        newPos.add(attack);
+                    }
+                }
         }
     }
 
