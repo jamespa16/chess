@@ -146,7 +146,7 @@ public class ChessPiece {
 
         Set<ChessMove> newMoves = new HashSet<>();
         for (ChessPosition pos : newPos) {
-            if (newPos.get(1).getRow() == endOfBoard) {
+            if (pos.getRow() == endOfBoard && this.getPieceType() == PieceType.PAWN) {
                 newMoves.add(new ChessMove(myPosition, pos, PieceType.QUEEN));
                 newMoves.add(new ChessMove(myPosition, pos, PieceType.BISHOP));
                 newMoves.add(new ChessMove(myPosition, pos, PieceType.KNIGHT));
