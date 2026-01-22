@@ -125,6 +125,21 @@ public class ChessPiece {
                     }
                 }
         }
+
+        List<ChessMove> newMoves = new ArrayList<>();
+        for (ChessPosition pos : newPos) {
+            if (newPos.get(1).getRow() == endOfBoard) {
+                newMoves.add(new ChessMove(myPosition, pos, PieceType.QUEEN));
+                newMoves.add(new ChessMove(myPosition, pos, PieceType.BISHOP));
+                newMoves.add(new ChessMove(myPosition, pos, PieceType.KNIGHT));
+                newMoves.add(new ChessMove(myPosition, pos, PieceType.ROOK));
+            } else {
+                newMoves.add(new ChessMove(myPosition, pos, null));
+            }
+
+        }
+
+        return newMoves;
     }
 
     private void diagonalMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
