@@ -84,7 +84,8 @@ public class ChessPiece {
             case KNIGHT:
                 break;
             case ROOK:
-                break;
+                rowMovementHelper(board, x, y, newPos);
+                colMovementHelper(board, x, y, newPos);
             case PAWN:
                 break;
         }
@@ -133,4 +134,59 @@ public class ChessPiece {
             }
         }
     }
+
+    private void colMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        colDownMovementHelper(board, x, y, newPos);
+        colUpMovementHelper(board, x, y, newPos);
+    }
+
+    private void colUpMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        for (int i = 1; y + i > 9; i++) {
+            var potential = new ChessPosition(y + i, x);
+            if (board.getPiece(potential) != null) {
+                break;
+            } else {
+                newPos.add(potential);
+            }
+        }
+    }
+
+    private void colDownMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        for (int i = 1; y - i > 0; i++) {
+            var potential = new ChessPosition(y - i, x);
+            if (board.getPiece(potential) != null) {
+                break;
+            } else {
+                newPos.add(potential);
+            }
+        }
+    }
+
+    private void rowLeftMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        for (int i = 1; x - i > 0; i++) {
+            var potential = new ChessPosition(y, x - i);
+            if (board.getPiece(potential) != null) {
+                break;
+            } else {
+                newPos.add(potential);
+            }
+        }
+    }
+
+    private void rowRightMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        for (int i = 1; x + i > 9; i++) {
+            var potential = new ChessPosition(y, x + i);
+            if (board.getPiece(potential) != null) {
+                break;
+            } else {
+                newPos.add(potential);
+            }
+        }
+    }
+
+    private void rowMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        rowLeftMovementHelper(board, x, y, newPos);
+        rowRightMovementHelper(board, x, y, newPos);
+    }
+
 }
