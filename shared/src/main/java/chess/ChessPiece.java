@@ -80,13 +80,57 @@ public class ChessPiece {
             case QUEEN:
                 break;
             case BISHOP:
-                break;
+                diagonalMovementHelper(board, x, y, newPos);
             case KNIGHT:
                 break;
             case ROOK:
                 break;
             case PAWN:
                 break;
+        }
+    }
+
+    private void diagonalMovementHelper(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
+        boolean upLeft = true;
+        boolean upRight = true;
+        boolean downLeft = true;
+        boolean downRight = true;
+        for(int i = 0; i < 9; i++) {
+            if(i + x < 9 && i + y < 9 && upRight) {
+                ChessPosition potential = new ChessPosition(y+i, x+i);
+                if (board.getPiece(potential) == null) {
+                    newPos.add(potential);
+                } else {
+                    upRight = false;
+                }
+            }
+
+            if(i + x < 9 && y - i > 0 && downRight) {
+                ChessPosition potential = new ChessPosition(y-i, x+i);
+                if (board.getPiece(potential) == null) {
+                    newPos.add(potential);
+                } else {
+                    downRight = false;
+                }
+            }
+
+            if(x - i > 0 && i + y < 9 && upLeft) {
+                ChessPosition potential = new ChessPosition(y+i, x-i);
+                if (board.getPiece(potential) == null) {
+                    newPos.add(potential);
+                } else {
+                    upLeft = false;
+                }
+            }
+
+            if(x - i > 0 && y - i > 0 && downLeft) {
+                ChessPosition potential = new ChessPosition(y-i, x-i);
+                if (board.getPiece(potential) == null) {
+                    newPos.add(potential);
+                } else {
+                    downLeft = false;
+                }
+            }
         }
     }
 }
