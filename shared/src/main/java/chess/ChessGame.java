@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -55,7 +56,22 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+        if (piece != null) {
+            Collection<ChessMove> validMoves = new HashSet<>();
+            Collection<ChessMove> potentialMoves = piece.pieceMoves(board, startPosition);
+            for (ChessMove move : potentialMoves) {
+                ChessPosition result = move.getEndPosition();
+                board.movePiece(startPosition, result);
+                if (!this.isInCheck(currentTurn)) {
+                    validMoves.add(move);
+                }
+                board.movePiece(result, startPosition);
+            }
+            return validMoves;
+        } else {
+            return null;
+        }
     }
 
     /**

@@ -87,6 +87,16 @@ public class ChessBoard {
         addPiece(new ChessPosition(row, 8), new ChessPiece(color, ChessPiece.PieceType.ROOK));
     }
 
+    public void removePiece(ChessPosition target){
+        board[target.getRow()][target.getColumn()] = null;
+    }
+
+    public void movePiece(ChessPosition start, ChessPosition end) {
+        ChessPiece piece = this.getPiece(start);
+        this.addPiece(end, piece);
+        this.removePiece(start);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof ChessBoard that)) {
