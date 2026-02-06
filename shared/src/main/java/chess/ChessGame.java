@@ -75,6 +75,7 @@ public class ChessGame {
         } catch (InvalidMoveException e) {
             return false;
         }
+        return future.isInCheck(currentTurn);
     }
 
     /**
@@ -84,7 +85,34 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessPosition start = move.getStartPosition();
+        ChessPosition end = move.getEndPosition();
+        int start_x = start.getColumn();
+        int start_y = start.getRow();
+        int end_x = end.getColumn();
+        int end_y = end.getRow();
+
+        boolean boundsCheck = start_x > 0 &&
+                              start_x < 9 &&
+                              start_y > 0 &&
+                              start_y < 9 &&
+                              end_x > 0 &&
+                              end_x < 9 &&
+                              end_y > 0 &&
+                              end_y < 9;
+        
+        if (!boundsCheck) {
+            throw new InvalidMoveException("move out of bounds");
+        }
+
+        ChessPiece startPiece = board.getPiece(start);
+        ChessPiece endPiece = board.getPiece(end);
+
+        if (endPiece != null && endPiece.getTeamColor() == startPiece.getTeamColor()) {
+            throw new InvalidMoveException("move results in attacking teammate");
+        }
+
+        board.movePiece(start, end);
     }
 
     /**
