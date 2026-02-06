@@ -91,6 +91,14 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
+        /* PSEUDO CODE
+        idea: check each movement type from the king's square for attackers
+        1. check the two diagonals for opposing pawns / beyond for bishops & queens
+        2. check the rows for rooks & queens
+        3. check the Ls for knights
+
+        this can basically reuse the movement logic, but modify it to return TRUE if an opposing piece is found
+         */
         throw new RuntimeException("Not implemented");
     }
 
@@ -101,6 +109,9 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
+        /* PSEUDO CODE
+        idea: reuse the isInCheck on each square around the king
+         */
         throw new RuntimeException("Not implemented");
     }
 
@@ -112,6 +123,9 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
+        /* PSEUDO CODE
+        idea: if isInCheck returns true on every square around the king, but not their own, then they are in stalemate
+         */
         throw new RuntimeException("Not implemented");
     }
 
