@@ -331,4 +331,17 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return board;
     }
+
+    @Override
+    public boolean equals (Object o) {
+        if (o instanceof ChessGame that) {
+            return this.getBoard() == that.getBoard() && this.getTeamTurn() == that.getTeamTurn();
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getBoard().hashCode() + getTeamTurn().hashCode();
+    }
 }
