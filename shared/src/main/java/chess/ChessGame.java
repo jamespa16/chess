@@ -240,7 +240,26 @@ public class ChessGame {
                 }
             }
         }
-    
+        
+        // check for knights
+        int[][] potentialKnights = {
+                        {king_x + 2, king_y + 1},
+                        {king_x + 2, king_y - 1},
+                        {king_x - 2, king_y + 1},
+                        {king_x - 2, king_y - 1},
+                        {king_x + 1, king_y + 2},
+                        {king_x + 1, king_y - 2},
+                        {king_x - 1, king_y + 2},
+                        {king_x - 1, king_y - 2}
+                };
+        
+        for (int[] knight : potentialKnights) {
+            ChessPiece potential = board.getPiece(new ChessPosition(knight[0], knight[1]));
+            if (potential != null && potential.getTeamColor() != teamColor && potential.getPieceType() == ChessPiece.PieceType.KNIGHT){
+                check = true;
+            }
+        }
+        
         return check;
     }
 
