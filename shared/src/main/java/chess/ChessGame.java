@@ -2,6 +2,7 @@ package chess;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 
 import chess.ChessPiece.PieceType;
 
@@ -14,8 +15,8 @@ import chess.ChessPiece.PieceType;
 public class ChessGame {
     private ChessBoard board;
     private TeamColor currentTurn;
-    private boolean whiteCanCastle;
-    private boolean blackCanCastle;
+    private boolean whiteCanCastle = false;
+    private boolean blackCanCastle = false;
 
     public ChessGame() {
         board = new ChessBoard();
@@ -40,6 +41,19 @@ public class ChessGame {
      */
     public void setTeamTurn(TeamColor team) {
         currentTurn = team;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ChessGame chessGame)) {
+            return false;
+        }
+        return whiteCanCastle == chessGame.whiteCanCastle && blackCanCastle == chessGame.blackCanCastle && Objects.equals(getBoard(), chessGame.getBoard()) && currentTurn == chessGame.currentTurn;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getBoard(), currentTurn, whiteCanCastle, blackCanCastle);
     }
 
     /**
@@ -330,18 +344,5 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
-    }
-
-    @Override
-    public boolean equals (Object o) {
-        if (o instanceof ChessGame that) {
-            return this.getBoard() == that.getBoard() && this.getTeamTurn() == that.getTeamTurn();
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return getBoard().hashCode() + getTeamTurn().hashCode();
     }
 }
