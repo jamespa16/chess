@@ -3,6 +3,8 @@ package chess;
 import java.util.Collection;
 import java.util.HashSet;
 
+import chess.ChessPiece.PieceType;
+
 /**
  * For a class that can manage a chess game, making moves on a board
  * <p>
@@ -150,6 +152,51 @@ public class ChessGame {
         }
         if (!check && potentialLeftPawn != null && potentialLeftPawn.getTeamColor() != teamColor && potentialLeftPawn.getPieceType() == ChessPiece.PieceType.PAWN){
             check = true;
+        }
+
+        // check for bishops & queens on the diagonal
+        for (int i = 0; i < 9 && !check; i++) {
+            for(int j = 0; j < 9 && !check; j++) {
+                if (i + king_x < 9 && j + king_y < 9) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
+                    if (potentialAttacker != null) {
+                        PieceType attackerType = potentialAttacker.getPieceType();
+                        if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
+                            check = true;
+                        }
+                    }
+                }
+
+                if (i + king_x < 9 && j - king_y > 0) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
+                    if (potentialAttacker != null) {
+                        PieceType attackerType = potentialAttacker.getPieceType();
+                        if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
+                            check = true;
+                        }
+                    }
+                }
+
+                if (i - king_x > 0 && j + king_y < 9) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
+                    if (potentialAttacker != null) {
+                        PieceType attackerType = potentialAttacker.getPieceType();
+                        if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
+                            check = true;
+                        }
+                    }
+                }
+
+                if (i - king_x > 0 && j - king_y > 0) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
+                    if (potentialAttacker != null) {
+                        PieceType attackerType = potentialAttacker.getPieceType();
+                        if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
+                            check = true;
+                        }
+                    }
+                }
+            }
         }
         return check;
     }
