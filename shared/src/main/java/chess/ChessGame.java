@@ -154,9 +154,10 @@ public class ChessGame {
             check = true;
         }
 
-        // check for bishops & queens on the diagonal
-        for (int i = 0; i < 9 && !check; i++) {
-            for(int j = 0; j < 9 && !check; j++) {
+        
+        for (int i = 1; i < 9 && !check; i++) {
+            for(int j = 1; j < 9 && !check; j++) {
+                // check for bishops & queens on the diagonal
                 if (i + king_x < 9 && j + king_y < 9) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
                     if (potentialAttacker != null) {
@@ -167,7 +168,7 @@ public class ChessGame {
                     }
                 }
 
-                if (i + king_x < 9 && j - king_y > 0) {
+                if (i + king_x < 9 && j - king_y > 0 && !check) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
@@ -177,7 +178,7 @@ public class ChessGame {
                     }
                 }
 
-                if (i - king_x > 0 && j + king_y < 9) {
+                if (i - king_x > 0 && j + king_y < 9 && !check) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
@@ -187,7 +188,7 @@ public class ChessGame {
                     }
                 }
 
-                if (i - king_x > 0 && j - king_y > 0) {
+                if (i - king_x > 0 && j - king_y > 0 && !check) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
@@ -197,7 +198,49 @@ public class ChessGame {
                     }
                 }
             }
+
+            // check for straight-line attacks
+            if (i + king_x < 9 && !check) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
+                if (potentialAttacker != null) {
+                    PieceType attackerType = potentialAttacker.getPieceType();
+                    if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
+                        check = true;
+                    }
+                }
+            }
+
+            if (i - king_x > 0 && !check) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
+                if (potentialAttacker != null) {
+                    PieceType attackerType = potentialAttacker.getPieceType();
+                    if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
+                        check = true;
+                    }
+                }
+            }
+
+            if (i + king_y < 9 && !check) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i + king_y));
+                if (potentialAttacker != null) {
+                    PieceType attackerType = potentialAttacker.getPieceType();
+                    if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
+                        check = true;
+                    }
+                }
+            }
+
+            if (i - king_y > 0 && !check) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i - king_y));
+                if (potentialAttacker != null) {
+                    PieceType attackerType = potentialAttacker.getPieceType();
+                    if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
+                        check = true;
+                    }
+                }
+            }
         }
+    
         return check;
     }
 
