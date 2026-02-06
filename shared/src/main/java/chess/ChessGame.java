@@ -130,18 +130,32 @@ public class ChessGame {
 
         this can basically reuse the movement logic, but modify it to return TRUE if an opposing piece is found
          */
-
-        /*
-        1. find king
-        2. check check
-         */
-
+        boolean check = false;
         ChessPosition kingLocation = getKingPosition(teamColor);
-        throw new RuntimeException("Not implemented");
+        int king_x = kingLocation.getColumn();
+        int king_y = kingLocation.getRow();
+        
+        int direction = -1;
+        if (teamColor == ChessGame.TeamColor.BLACK) {
+            direction = 1;
+        }
+
+        // check for pawns
+        ChessPosition rightPawnAttack = new ChessPosition(king_x + direction, king_y + 1);
+        ChessPosition leftPawnAttack = new ChessPosition(king_x + direction, king_y - 1);
+        ChessPiece potentialRightPawn = board.getPiece(rightPawnAttack);
+        ChessPiece potentialLeftPawn = board.getPiece(leftPawnAttack);
+        if (potentialRightPawn != null && potentialRightPawn.getTeamColor() != teamColor && potentialRightPawn.getPieceType() == ChessPiece.PieceType.PAWN){
+            check = true;
+        }
+        if (!check && potentialLeftPawn != null && potentialLeftPawn.getTeamColor() != teamColor && potentialLeftPawn.getPieceType() == ChessPiece.PieceType.PAWN){
+            check = true;
+        }
+        return check;
     }
 
     private ChessPosition getKingPosition(TeamColor teamColor) {
-        ChessPosition kingPosition;
+        ChessPosition kingPosition = null;
         boolean kingFound = false;
         for(int i = 1; i < 9 && !kingFound; i++) {
             for(int j = 1; j < 9 && !kingFound; j++) {
