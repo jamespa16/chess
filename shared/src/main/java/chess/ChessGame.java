@@ -57,20 +57,23 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece != null) {
-            Collection<ChessMove> validMoves = new HashSet<>();
-            Collection<ChessMove> potentialMoves = piece.pieceMoves(board, startPosition);
-            for (ChessMove move : potentialMoves) {
-                ChessPosition result = move.getEndPosition();
-                board.movePiece(startPosition, result);
-                if (!this.isInCheck(currentTurn)) {
-                    validMoves.add(move);
-                }
-                board.movePiece(result, startPosition);
+        Collection<ChessMove> logicalMoves = piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> validMoves = new HashSet<>();
+        for(ChessMove move : logicalMoves) {
+            if (simulateMove(move)){
+                validMoves.add(move);
             }
-            return validMoves;
-        } else {
-            return null;
+        }
+        return validMoves;
+    }
+
+    private boolean simulateMove (ChessMove move) {
+        ChessGame future = new ChessGame();
+        future.board = this.board;
+        try {
+            future.makeMove(move);
+        } catch (InvalidMoveException e) {
+            return false;
         }
     }
 
