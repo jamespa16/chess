@@ -259,7 +259,7 @@ public class ChessGame {
                 check = true;
             }
         }
-        
+
         return check;
     }
 
@@ -293,7 +293,9 @@ public class ChessGame {
         /* PSEUDO CODE
         idea: reuse the isInCheck on each square around the king
          */
-        throw new RuntimeException("Not implemented");
+        ChessPosition king = getKingPosition(teamColor);
+        Collection<ChessMove> validMoves = validMoves(king);
+        return validMoves.isEmpty() && isInCheck(teamColor);
     }
 
     /**
@@ -307,7 +309,9 @@ public class ChessGame {
         /* PSEUDO CODE
         idea: if isInCheck returns true on every square around the king, but not their own, then they are in stalemate
          */
-        throw new RuntimeException("Not implemented");
+        ChessPosition king = getKingPosition(teamColor);
+        Collection<ChessMove> validMoves = validMoves(king);
+        return validMoves.isEmpty() && !isInCheck(teamColor);
     }
 
     /**
