@@ -130,7 +130,34 @@ public class ChessGame {
 
         this can basically reuse the movement logic, but modify it to return TRUE if an opposing piece is found
          */
+
+        /*
+        1. find king
+        2. check check
+         */
+
+        ChessPosition kingLocation = getKingPosition(teamColor);
         throw new RuntimeException("Not implemented");
+    }
+
+    private ChessPosition getKingPosition(TeamColor teamColor) {
+        ChessPosition kingPosition;
+        boolean kingFound = false;
+        for(int i = 1; i < 9 && !kingFound; i++) {
+            for(int j = 1; j < 9 && !kingFound; j++) {
+                ChessPosition potentialPosition = new ChessPosition(i, j);
+                ChessPiece potentialPiece = board.getPiece(potentialPosition);
+                boolean isCorrectKing = potentialPiece != null &&
+                                        potentialPiece.getTeamColor() == teamColor &&
+                                        potentialPiece.getPieceType() == ChessPiece.PieceType.KING;
+                if (isCorrectKing) {
+                    kingPosition = potentialPosition;
+                    kingFound = true;
+                }
+            }
+        }
+
+        return kingPosition;
     }
 
     /**
