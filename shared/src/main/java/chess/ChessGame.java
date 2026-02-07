@@ -83,8 +83,20 @@ public class ChessGame {
         Collection<ChessMove> logicalMoves = piece.pieceMoves(board, startPosition);
         Collection<ChessMove> validMoves = new HashSet<>();
         for(ChessMove move : logicalMoves) {
-            if (simulateMove(move)){
-                validMoves.add(move);
+            if (piece.getTeamColor() == currentTurn) {
+                if (simulateMove(move)) {
+                    validMoves.add(move);
+                }
+            } else {
+                setTeamTurn(piece.getTeamColor());
+                if (simulateMove(move)) {
+                    validMoves.add(move);
+                }
+                if (piece.getTeamColor() == TeamColor.WHITE) {
+                    currentTurn = TeamColor.BLACK;
+                } else {
+                    currentTurn = TeamColor.WHITE;
+                }
             }
         }
         return validMoves;
@@ -129,8 +141,16 @@ public class ChessGame {
             board.addPiece(end, new ChessPiece(currentTurn, move.getPromotionPiece()));
         }
 
-        if (isInCheck(currentTurn)) {
+        if (isInCheck(piece.getTeamColor())) {
             throw new InvalidMoveException("move results in check");
+        }
+
+        if(piece.getPieceType() == PieceType.ROOK || piece.getPieceType() == PieceType.KING) {
+            if(currentTurn == TeamColor.WHITE) {
+                whiteCanCastle = false;
+            } else {
+                blackCanCastle = false;
+            }
         }
 
         if(currentTurn == TeamColor.WHITE) {
@@ -187,14 +207,14 @@ public class ChessGame {
         int king_x = kingLocation.getColumn();
         int king_y = kingLocation.getRow();
         
-        int direction = -1;
+        int direction = 1;
         if (teamColor == ChessGame.TeamColor.BLACK) {
-            direction = 1;
+            direction = -1;
         }
 
         // check for pawns
-        ChessPosition rightPawnAttack = new ChessPosition(king_x + direction, king_y + 1);
-        ChessPosition leftPawnAttack = new ChessPosition(king_x + direction, king_y - 1);
+        ChessPosition rightPawnAttack = new ChessPosition(king_y + direction, king_x + 1);
+        ChessPosition leftPawnAttack = new ChessPosition(king_y + direction, king_x - 1);
         ChessPiece potentialRightPawn = board.getPiece(rightPawnAttack);
         ChessPiece potentialLeftPawn = board.getPiece(leftPawnAttack);
         if (potentialRightPawn != null && potentialRightPawn.getTeamColor() != teamColor && potentialRightPawn.getPieceType() == ChessPiece.PieceType.PAWN){
@@ -204,7 +224,22 @@ public class ChessGame {
             check = true;
         }
 
-        // set up booleans for checking pieces
+        //check for kings
+        for (int i = -1; i < 2 && !check; i++) {
+            for (int j = -1; j < 2 && !check; j++) {
+                if (king_x + i < 9 && king_x + i > 0 && king_y + j < 9 && king_y + j > 0) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_y + i, king_x + j));
+                    if (potentialAttacker != null) {
+                        PieceType attackerType = potentialAttacker.getPieceType();
+                        if (attackerType == PieceType.KING && potentialAttacker.getTeamColor() != teamColor) {
+                            check = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // set up booleans for checking distant pieces
         boolean upLeftBlocked = false;
         boolean upRightBlocked = false;
         boolean downLeftBlocked = false;
@@ -215,7 +250,7 @@ public class ChessGame {
         boolean leftBlocked = false;
         boolean rightBlocked = false;
 
-        for (int i = 0; i < 9 && !check; i++) {
+        for (int i = 1; i < 9 && !check; i++) {
             // check for bishops & queens on the diagonal
             if (i + king_x < 9 && i + king_y < 9 && !upRightBlocked) {
                 boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, i+king_y, true);
@@ -352,9 +387,12 @@ public class ChessGame {
         /* PSEUDO CODE
         idea: if isInCheck returns true on every square around the king, but not their own, then they are in stalemate
          */
-        ChessPosition king = getKingPosition(teamColor);
-        Collection<ChessMove> validMoves = validMoves(king);
-        return validMoves.isEmpty() && !isInCheck(teamColor);
+        Collection<ChessPosition> team = getTeammates(teamColor);
+        Collection<ChessMove> potentialMoves = new HashSet<>();
+        for(ChessPosition piece : team) {
+            potentialMoves.addAll(validMoves(piece));
+        }
+        return potentialMoves.isEmpty() && !isInCheck(teamColor);
     }
 
     /**
