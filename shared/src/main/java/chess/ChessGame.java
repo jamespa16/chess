@@ -124,6 +124,10 @@ public class ChessGame {
         ChessPiece startPiece = board.getPiece(start);
         ChessPiece endPiece = board.getPiece(end);
 
+        if (startPiece == null) {
+            throw new InvalidMoveException("piece to move does not exist");
+        }
+
         if (endPiece != null && endPiece.getTeamColor() == startPiece.getTeamColor()) {
             throw new InvalidMoveException("move results in attacking teammate");
         }
@@ -168,88 +172,115 @@ public class ChessGame {
             check = true;
         }
 
-        
+        // set up booleans for checking pieces
+        boolean upBlocked = false;
+        boolean downBlocked = false;
+        boolean leftBlocked = false;
+        boolean rightBlocked = false;
+
         for (int i = 1; i < 9 && !check; i++) {
+
+            boolean upLeftBlocked = false;
+            boolean upRightBlocked = false;
+            boolean downLeftBlocked = false;
+            boolean downRightBlocked = false;
+
             for(int j = 1; j < 9 && !check; j++) {
                 // check for bishops & queens on the diagonal
-                if (i + king_x < 9 && j + king_y < 9) {
+                if (i + king_x < 9 && j + king_y < 9 && !upRightBlocked) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
+                        } else {
+                            upRightBlocked = true;
                         }
                     }
                 }
 
-                if (i + king_x < 9 && j - king_y > 0 && !check) {
+                if (i + king_x < 9 && j - king_y > 0 && !check && !upLeftBlocked) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
+                        } else {
+                            upLeftBlocked = true;
                         }
                     }
                 }
 
-                if (i - king_x > 0 && j + king_y < 9 && !check) {
+                if (i - king_x > 0 && j + king_y < 9 && !check && !downRightBlocked) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
+                        } else {
+                            downRightBlocked = true;
                         }
                     }
                 }
 
-                if (i - king_x > 0 && j - king_y > 0 && !check) {
+                if (i - king_x > 0 && j - king_y > 0 && !check && !downLeftBlocked) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
                     if (potentialAttacker != null) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
+                        } else {
+                            downLeftBlocked = true;
                         }
                     }
                 }
             }
 
             // check for straight-line attacks
-            if (i + king_x < 9 && !check) {
+            if (i + king_x < 9 && !check && !upBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
                 if (potentialAttacker != null) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
+                    } else {
+                        upBlocked = true;
                     }
                 }
             }
 
-            if (i - king_x > 0 && !check) {
+            if (i - king_x > 0 && !check && !downBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
                 if (potentialAttacker != null) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
+                    } else {
+                        downBlocked = true;
                     }
                 }
             }
 
-            if (i + king_y < 9 && !check) {
+            if (i + king_y < 9 && !check && !rightBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i + king_y));
                 if (potentialAttacker != null) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
+                    } else {
+                        rightBlocked = true;
                     }
                 }
             }
 
-            if (i - king_y > 0 && !check) {
+            if (i - king_y > 0 && !check && !leftBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i - king_y));
                 if (potentialAttacker != null) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
+                    } else {
+                        leftBlocked = true;
                     }
                 }
             }

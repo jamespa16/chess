@@ -88,7 +88,7 @@ public class ChessBoard {
     }
 
     public void removePiece(ChessPosition target){
-        board[target.getRow()][target.getColumn()] = null;
+        board[target.getRow() - 1][target.getColumn() - 1] = null;
     }
 
     public void movePiece(ChessPosition start, ChessPosition end) {
