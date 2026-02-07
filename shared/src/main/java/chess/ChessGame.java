@@ -27,6 +27,13 @@ public class ChessGame {
         board.resetBoard();
     }
 
+    public ChessGame(ChessGame other) {
+        this.board = new ChessBoard(other.board);
+        this.currentTurn = other.getTeamTurn();
+        this.whiteCanCastle = other.whiteCanCastle;
+        this.blackCanCastle = other.blackCanCastle;
+    }
+
     /**
      * @return Which team's turn it is
      */
@@ -84,8 +91,7 @@ public class ChessGame {
     }
 
     private boolean simulateMove (ChessMove move) {
-        ChessGame future = new ChessGame();
-        future.board = this.board;
+        ChessGame future = new ChessGame(this);
         try {
             future.makeMove(move);
         } catch (InvalidMoveException e) {
@@ -151,7 +157,12 @@ public class ChessGame {
         this can basically reuse the movement logic, but modify it to return TRUE if an opposing piece is found
          */
         boolean check = false;
+
         ChessPosition kingLocation = getKingPosition(teamColor);
+        if (kingLocation == null) {
+            return true; // this means the simulator attacked the other king successfully
+        }
+
         int king_x = kingLocation.getColumn();
         int king_y = kingLocation.getRow();
         
@@ -178,18 +189,18 @@ public class ChessGame {
         boolean leftBlocked = false;
         boolean rightBlocked = false;
 
-        for (int i = 1; i < 9 && !check; i++) {
+        for (int i = 0; i < 9 && !check; i++) {
 
             boolean upLeftBlocked = false;
             boolean upRightBlocked = false;
             boolean downLeftBlocked = false;
             boolean downRightBlocked = false;
 
-            for(int j = 1; j < 9 && !check; j++) {
+            for(int j = 0; j < 9 && !check; j++) {
                 // check for bishops & queens on the diagonal
                 if (i + king_x < 9 && j + king_y < 9 && !upRightBlocked) {
                     ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
-                    if (potentialAttacker != null) {
+                    if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
@@ -199,9 +210,9 @@ public class ChessGame {
                     }
                 }
 
-                if (i + king_x < 9 && j - king_y > 0 && !check && !upLeftBlocked) {
-                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
-                    if (potentialAttacker != null) {
+                if (i + king_x < 9 && king_y - j > 0 && !check && !upLeftBlocked) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y - j));
+                    if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
@@ -211,9 +222,9 @@ public class ChessGame {
                     }
                 }
 
-                if (i - king_x > 0 && j + king_y < 9 && !check && !downRightBlocked) {
-                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j + king_y));
-                    if (potentialAttacker != null) {
+                if (king_x - i > 0 && j + king_y < 9 && !check && !downRightBlocked) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x - i, j + king_y));
+                    if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
@@ -223,9 +234,9 @@ public class ChessGame {
                     }
                 }
 
-                if (i - king_x > 0 && j - king_y > 0 && !check && !downLeftBlocked) {
-                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, j - king_y));
-                    if (potentialAttacker != null) {
+                if (king_x - i > 0 && king_y - j > 0 && !check && !downLeftBlocked) {
+                    ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x - i, king_y - j));
+                    if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                         PieceType attackerType = potentialAttacker.getPieceType();
                         if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
                             check = true;
@@ -239,7 +250,7 @@ public class ChessGame {
             // check for straight-line attacks
             if (i + king_x < 9 && !check && !upBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
-                if (potentialAttacker != null) {
+                if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
@@ -249,9 +260,9 @@ public class ChessGame {
                 }
             }
 
-            if (i - king_x > 0 && !check && !downBlocked) {
-                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(i + king_x, king_y));
-                if (potentialAttacker != null) {
+            if (king_x - i > 0 && !check && !downBlocked) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x - i, king_y));
+                if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
@@ -263,7 +274,7 @@ public class ChessGame {
 
             if (i + king_y < 9 && !check && !rightBlocked) {
                 ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i + king_y));
-                if (potentialAttacker != null) {
+                if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
@@ -273,9 +284,9 @@ public class ChessGame {
                 }
             }
 
-            if (i - king_y > 0 && !check && !leftBlocked) {
-                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, i - king_y));
-                if (potentialAttacker != null) {
+            if (king_y - i > 0 && !check && !leftBlocked) {
+                ChessPiece potentialAttacker = board.getPiece(new ChessPosition(king_x, king_y - i));
+                if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
                     PieceType attackerType = potentialAttacker.getPieceType();
                     if (attackerType == ChessPiece.PieceType.ROOK || attackerType == ChessPiece.PieceType.QUEEN) {
                         check = true;
