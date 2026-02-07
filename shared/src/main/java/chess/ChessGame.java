@@ -140,13 +140,21 @@ public class ChessGame {
         }
     }
 
-    private boolean[] checkSquare(TeamColor teamColor, ChessBoard board, int x, int y) {
+    private boolean[] checkSquare(TeamColor teamColor, ChessBoard board, int y, int x, boolean diagonals) {
         boolean[] results = {false, false};
         ChessPiece potentialAttacker = board.getPiece(new ChessPosition(x, y));
-        if (potentialAttacker != null && potentialAttacker.getTeamColor() != teamColor) {
-            PieceType attackerType = potentialAttacker.getPieceType();
-            if (attackerType == ChessPiece.PieceType.BISHOP || attackerType == ChessPiece.PieceType.QUEEN) {
-                results[0] = true;
+        if (potentialAttacker != null) {
+            if (potentialAttacker.getTeamColor() != teamColor) {
+                PieceType attackerType = potentialAttacker.getPieceType();
+                if (attackerType == PieceType.QUEEN) {
+                    results[0] = true;
+                } else if (diagonals && attackerType == PieceType.BISHOP) {
+                    results[0] = true;
+                } else {
+                    if (attackerType == PieceType.ROOK) {
+                        results[0] = true;
+                    }
+                }
             } else {
                 results[1] = true;
             }
@@ -210,50 +218,50 @@ public class ChessGame {
         for (int i = 0; i < 9 && !check; i++) {
             // check for bishops & queens on the diagonal
             if (i + king_x < 9 && i + king_y < 9 && !upRightBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, i+king_y);
+                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, i+king_y, true);
                 check = results[0];
                 upRightBlocked = results[1];
             }
 
             if (i + king_x < 9 && king_y - i > 0 && !check && !upLeftBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, king_y - i);
+                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, king_y - i, true);
                 check = results[0];
                 upLeftBlocked = results[1];
             }
 
             if (king_x - i > 0 && i + king_y < 9 && !check && !downRightBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, i + king_y);
+                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, i + king_y, true);
                 check = results[0];
                 downRightBlocked = results[1];
             }
 
             if (king_x - i > 0 && king_y - i > 0 && !check && !downLeftBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, king_y - i);
+                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, king_y - i, true);
                 check = results[0];
                 downLeftBlocked = results[1];
             }
 
             // check for straight-line attacks
             if (i + king_x < 9 && !check && !upBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, king_y);
+                boolean[] results = checkSquare(teamColor, getBoard(), i + king_x, king_y, false);
                 check = results[0];
                 upBlocked = results[1];
             }
 
             if (king_x - i > 0 && !check && !downBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, king_y);
+                boolean[] results = checkSquare(teamColor, getBoard(), king_x - i, king_y, false);
                 check = results[0];
                 downBlocked = results[1];
             }
 
             if (i + king_y < 9 && !check && !rightBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), king_x, king_y + i);
+                boolean[] results = checkSquare(teamColor, getBoard(), king_x, king_y + i, false);
                 check = results[0];
                 rightBlocked = results[1];
             }
 
             if (king_y - i > 0 && !check && !leftBlocked) {
-                boolean[] results = checkSquare(teamColor, getBoard(), king_x, king_y - i);
+                boolean[] results = checkSquare(teamColor, getBoard(), king_x, king_y - i, false);
                 check = results[0];
                 leftBlocked = results[1];
             }
@@ -272,7 +280,7 @@ public class ChessGame {
                 };
         
         for (int[] knight : potentialKnights) {
-            ChessPiece potential = board.getPiece(new ChessPosition(knight[0], knight[1]));
+            ChessPiece potential = board.getPiece(new ChessPosition(knight[1], knight[0]));
             if (potential != null && potential.getTeamColor() != teamColor && potential.getPieceType() == ChessPiece.PieceType.KNIGHT){
                 check = true;
             }
