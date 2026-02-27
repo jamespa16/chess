@@ -23,4 +23,6 @@ public class UserService {
     public void logoutUser(UUID authToken) {
         throw new RuntimeException("not implemented");
     }
+
+    public void clearDatabase() { throw new RuntimeException("not implemented"); }
 }

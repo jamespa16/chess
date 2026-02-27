@@ -1,25 +1,32 @@
 package service;
 
+import dataaccess.GameDAO;
 import io.javalin.http.Context;
+import model.GameData;
+import model.JoinRequest;
+
+import java.util.Collection;
+import java.util.UUID;
 
 public class GameService {
-    public GameService(){
-
+    GameDAO db;
+    public GameService(GameDAO db){
+        this.db = db;
     }
 
-    public String listGames(Context ctx) {
+    public Collection<GameData> listGames(UUID authToken) {
         throw new RuntimeException("not implemented");
     }
 
-    public String newGame(Context ctx) {
+    public GameData newGame(UUID authToken) {
         throw new RuntimeException("not implemented");
     }
 
-    public void joinGame(Context ctx) {
+    public void joinGame(JoinRequest joinRequest) {
         throw new RuntimeException("not implemented");
     }
 
-    public void clearDatabase(Context ctx) {
+    public void clearDatabase() {
         throw new RuntimeException("not implemented");
     }
 }

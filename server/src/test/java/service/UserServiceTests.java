@@ -3,9 +3,7 @@ package service;
 import dataaccess.UserDAO;
 import model.UserData;
 import org.junit.jupiter.api.*;
-
 import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTests {
@@ -81,5 +79,18 @@ public class UserServiceTests {
         userService.registerUser(user);
         UUID authToken = userService.loginUser(user);
         assertThrows(UnauthorizedError.class, () -> userService.logoutUser(authToken));
+    }
+
+    @Test
+    void clearDatabase() {
+        UserDAO db = new MemoryUserDAO();
+        UserService userService = new UserService(db);
+        String username = "bob";
+        String password = "1234";
+        String email = "bob@boingo.com";
+        UserData user = new UserData(username, password, email);
+        userService.registerUser(user);
+        userService.clearDatabase();
+        assertDoesNotThrow(() -> userService.registerUser(user));
     }
 }
