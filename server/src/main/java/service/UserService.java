@@ -1,21 +1,26 @@
 package service;
 
-import io.javalin.http.Context;
+import dataaccess.UserDAO;
+import model.UserData;
+
 import java.util.UUID;
 
 public class UserService {
-    public UserService() {
+    private UserDAO db;
+
+    public UserService(UserDAO db) {
+        this.db = db;
     }
 
-    public UUID registerUser(Context ctx) {
+    public UserData registerUser(UserData user) {
         throw new RuntimeException("not implemented");
     }
 
-    public UUID loginUser(Context ctx) {
+    public UUID loginUser(UserData user) {
         throw new RuntimeException("not implemented");
     }
 
-    public void logoutUser(Context ctx) {
+    public void logoutUser(UUID authToken) {
         throw new RuntimeException("not implemented");
     }
 }
