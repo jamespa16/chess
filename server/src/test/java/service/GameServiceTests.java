@@ -2,6 +2,8 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.GameDAO;
+import dataaccess.MemoryGameDAO;
+import dataaccess.MemoryUserDAO;
 import dataaccess.UserDAO;
 import model.GameData;
 import model.JoinRequest;
@@ -15,6 +17,7 @@ import java.util.UUID;
 import static chess.ChessGame.TeamColor.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+// TESTS NOT FULLY IMPLEMENTED!!
 public class GameServiceTests {
     @Test
     void newGameTest() {
