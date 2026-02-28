@@ -4,7 +4,6 @@ import static chess.ChessGame.TeamColor.*;
 import dataaccess.GameDAO;
 import model.GameData;
 import model.JoinRequest;
-import model.UserData;
 
 import java.util.Collection;
 import java.util.UUID;
