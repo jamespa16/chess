@@ -54,7 +54,7 @@ public class GameService {
     }
 
     public void clearDatabase() {
-        throw new RuntimeException("not implemented");
+        db.clear();
     }
 
     private <T> T secure(UUID authToken, Supplier<T> secureCall) {

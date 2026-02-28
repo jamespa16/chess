@@ -16,13 +16,13 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public AuthData createAuth(UserData user) {
-        AuthData oldAuth =  getAuth(user);
-        if (oldAuth == null) {
-            AuthData newAuth = new AuthData(new UUID(32, 8), user.username());
+        try {
+            AuthData oldAuth =  getAuth(user);
+            return oldAuth;
+        } catch (DataAccessException e) { 
+            AuthData newAuth = new AuthData(UUID.randomUUID(), user.username());
             this.db.add(newAuth);
             return newAuth;
-        } else {
-            return oldAuth;
         }
     }
 

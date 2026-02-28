@@ -1,13 +1,11 @@
 package service;
 
-import chess.ChessGame;
 import dataaccess.*;
-import model.GameData;
 import model.JoinRequest;
+import model.LoginRequest;
 import model.UserData;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -16,26 +14,30 @@ import static org.junit.jupiter.api.Assertions.*;
 
 // TESTS NOT FULLY IMPLEMENTED!!
 public class GameServiceTests {
+    private final String username = "bob";
+    private final String password = "1234";
+    private final String email = "bob@boingo.com";
+    private final UserData user = new UserData(username, password, email);
+    private final AuthDAO authDB = new MemoryAuthDAO();
+    private final AuthService authService = new AuthService(authDB);
+
     @Test
     void newGameTest() {
-        UUID authToken = new UUID(32,8);
-        GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
-        GameData game = new GameData(0, "", "", "game0", new ChessGame());
-        assertEquals(game, gameService.newGame(authToken));
+        var gameService = setup();
+        var authToken = getAuthToken();
+        assertEquals(0, gameService.newGame(authToken));
     }
 
     @Test
     void listGamesTest() {
-        UUID authToken = new UUID(32, 8);
-        GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
-        Collection<Integer> gameList = new HashSet<>();
+        var authToken = getAuthToken();
+        var gameService = setup();
+        var gameList = new HashSet<>();
         gameList.add(gameService.newGame(authToken));
         gameList.add(gameService.newGame(authToken));
         gameList.add(gameService.newGame(authToken));
 
-        for (GameData game : gameService.listGames(authToken)) {
+        for (var game : gameService.listGames(authToken)) {
             assertTrue(gameList.contains(game.gameID()));
         }
     }
@@ -43,53 +45,62 @@ public class GameServiceTests {
     @Test
     void joinGamesTest() {
         // setup user service
-        UserDAO userDB = new MemoryUserDAO();
-        AuthDAO authDB = new MemoryAuthDAO();
-        AuthService authService = new AuthService(authDB);
-        UserService userService = new UserService(userDB, authService);
+        var userDB = new MemoryUserDAO();
+        var authDB = new MemoryAuthDAO();
+        var authService = new AuthService(authDB);
+        var userService = new UserService(userDB, authService);
 
         // setup user one
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
+        var username = "bob";
+        var password = "1234";
+        var email = "bob@boingo.com";
+        var user = new UserData(username, password, email);
         userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        var authToken = userService.loginUser(new LoginRequest(username, password));
 
         // setup user two
-        String username2 = "dole";
-        String password2 = "abcd";
-        String email2 = "dole@boingo.com";
-        UserData user2 = new UserData(username2, password2, email2);
+        var username2 = "dole";
+        var password2 = "abcd";
+        var email2 = "dole@boingo.com";
+        var user2 = new UserData(username2, password2, email2);
         userService.registerUser(user2);
-        UUID authToken2 = userService.loginUser(user);
 
         // setup game service & game
-        GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB, authService);
-        int game = gameService.newGame(authToken);
+        var gameDB = new MemoryGameDAO();
+        var gameService = new GameService(gameDB, authService);
+        var game = gameService.newGame(authToken);
 
         // user two joins game
-        JoinRequest joinRequest = new JoinRequest(BLACK, game);
-        assertDoesNotThrow(() -> gameService.joinGame(joinRequest, user2));
+        var joinRequest = new JoinRequest(BLACK, game);
+        assertDoesNotThrow(() -> gameService.joinGame(joinRequest, username2));
     }
 
     @Test
     void clearDatabase() {
         // setup user
-        UUID authToken = new UUID(32, 8);
+        var authToken = getAuthToken();
 
         // setup games
-        GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
+        var gameService = setup();
         gameService.newGame(authToken);
         gameService.newGame(authToken);
         gameService.newGame(authToken);
 
         // clear & test
         gameService.clearDatabase();
-        Collection<GameData> list = gameService.listGames(authToken);
+        var list = gameService.listGames(authToken);
         assertTrue(list.isEmpty());
     }
 
+    private GameService setup() {
+        var gameDB = new MemoryGameDAO();
+        return new GameService(gameDB, authService);
+    }
+
+    private UUID getAuthToken() {
+        var db = new MemoryUserDAO();
+        var userService = new UserService(db, authService);
+        userService.registerUser(user);
+        return userService.loginUser(new LoginRequest(username, password));
+    }
 }

@@ -1,9 +1,8 @@
 package service;
 
-import dataaccess.AuthDAO;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
-import dataaccess.UserDAO;
+import model.LoginRequest;
 import model.UserData;
 import org.junit.jupiter.api.*;
 import java.util.UUID;
@@ -11,97 +10,66 @@ import static org.junit.jupiter.api.Assertions.*;
 
 // TESTS ARE SUS!! DO NOT SUBMIT!!
 public class UserServiceTests {
+    private final String username = "bob";
+    private final String password = "1234";
+    private final String email = "bob@boingo.com";
+    private final UserData user = new UserData(username, password, email);
+    private final LoginRequest req = new LoginRequest(username, password);
+
     @Test
     void registerNewUserTest() {
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
+        var db = new MemoryUserDAO();
+        var authService = new AuthService(new MemoryAuthDAO());
+        var userService = new UserService(db, authService);
         userService.registerUser(user);
         assertEquals(user, db.getUser(username));
     }
 
     @Test
     void registerExistingUser(){
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
+        var userService = setup();
         assertThrows(UserAlreadyRegisteredError.class, () -> userService.registerUser(user));
     }
 
     @Test
     void loginUserTest(){
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        assertInstanceOf(UUID.class, userService.loginUser(user));
+        var userService = setup();
+        assertInstanceOf(UUID.class, userService.loginUser(req));
     }
 
     @Test
     void loginUserUnauthorizedTest(){
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        assertThrows(NotAuthorizedError.class, () -> userService.loginUser(new UserData(username, "bob", email)));
+        var userService = setup();
+        var req = new LoginRequest(username, "bobrocks");
+        assertThrows(NotAuthorizedError.class, () -> userService.loginUser(req));
     }
 
     @Test
     void logoutUserTest(){
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        var userService = setup();
+        var authToken = userService.loginUser(req);
         assertDoesNotThrow(() -> userService.logoutUser(authToken));
     }
 
     @Test
     void logoutUserUnauthorizedTest(){
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        var userService = setup();
+        var authToken = userService.loginUser(req);
         assertDoesNotThrow(() -> userService.logoutUser(authToken));
     }
 
     @Test
-    void clearDatabase() {
-        UserDAO db = new MemoryUserDAO();
-        AuthService authService = new AuthService(new MemoryAuthDAO());
-        UserService userService = new UserService(db, authService);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
+    void clearDatabaseTest() {
+        var userService = setup();
         userService.clearDatabase();
         assertDoesNotThrow(() -> userService.registerUser(user));
+    }
+
+    private UserService setup() {
+        var db = new MemoryUserDAO();
+        var authService = new AuthService(new MemoryAuthDAO());
+        var userService = new UserService(db, authService);
+        userService.registerUser(user);
+        return userService;
     }
 }
