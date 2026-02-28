@@ -1,7 +1,7 @@
 package service;
 
-import dataaccess.MemoryUserDAO;
 import dataaccess.UserDAO;
+import model.LoginRequest;
 import model.UserData;
 
 import java.util.UUID;
@@ -23,10 +23,10 @@ public class UserService {
         }
     }
 
-    public UUID loginUser(UserData user) {
-        UserData match = db.getUser(user.username());
-        if (match == user) {
-            return authService.createAuth(user);
+    public UUID loginUser(LoginRequest request) {
+        UserData match = db.getUser(request.username());
+        if (match.password() == request.password()) {
+            return authService.createAuth(match);
         } else {
             throw new NotAuthorizedError();
         }
@@ -38,9 +38,5 @@ public class UserService {
 
     public void clearDatabase() {
         db.clear();
-    }
-
-    public UserData getUser(String username) {
-        return db.getUser(username);
     }
 }

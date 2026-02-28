@@ -27,13 +27,13 @@ public class GameService {
         return secure(authToken, db::createGame);
     }
 
-    public void joinGame(JoinRequest joinRequest, UserData user) {
+    public void joinGame(JoinRequest joinRequest, String user) {
         GameData game = db.getGame(joinRequest.gameID());
         if (joinRequest.color() == WHITE) {
             if (game.whiteUsername().isEmpty()) {
                 db.updateGame(new GameData(
                         game.gameID(),
-                        user.username(),
+                        user,
                         game.blackUsername(),
                         game.gameName(),
                         game.game()));
@@ -45,7 +45,7 @@ public class GameService {
                 db.updateGame(new GameData(
                         game.gameID(),
                         game.whiteUsername(),
-                        user.username(),
+                        user,
                         game.gameName(),
                         game.game()));
             } else {

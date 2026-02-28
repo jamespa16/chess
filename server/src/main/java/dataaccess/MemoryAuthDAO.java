@@ -16,7 +16,7 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public AuthData createAuth(UserData user) {
-        AuthData oldAuth = getAuth(user);
+        AuthData oldAuth =  getAuth(user);
         if (oldAuth == null) {
             AuthData newAuth = new AuthData(new UUID(32, 8), user.username());
             this.db.add(newAuth);
@@ -31,7 +31,7 @@ public class MemoryAuthDAO implements AuthDAO {
         return db.stream()
                 .filter((AuthData auth) -> auth.username().equals(user.username()))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(DataAccessException::new);
     }
 
     @Override

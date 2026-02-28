@@ -1,18 +1,16 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
-import model.JoinRequest;
-import model.UserData;
-import service.AuthService;
-import service.GameService;
-import service.UserService;
+import model.*;
+import service.*;
 
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class Server {
 
@@ -51,49 +49,91 @@ public class Server {
         javalin.stop();
     }
 
-    public void registerUser(Context ctx) {
-        var user = new Gson().fromJson(ctx.body(), UserData.class);
-        userService.registerUser(user);
-        
+    public void registerUser(Context context) { // POST /user
+        handler(context, (Context ctx) -> {
+            var user = new Gson().fromJson(ctx.body(), UserData.class);
+            userService.registerUser(user);
+            var token = userService.loginUser(new LoginRequest(user.username(), user.password()));
+            var result = new AuthData(token, user.username());
+
+            ctx.status(200);
+            ctx.result(new Gson().toJson(result));
+        });
     }
 
-    public void loginUser(Context ctx) {
-        decoder(ctx, UserData.class, userService::loginUser);
+    public void loginUser(Context context) { // POST /session
+        handler(context, (Context ctx) -> {
+            var req = new Gson().fromJson(ctx.body(), LoginRequest.class);
+            var token = userService.loginUser(req);
+            var result = new AuthData(token, req.username());
+
+            ctx.status(200);
+            ctx.result(new Gson().toJson(result));
+        });
     }
 
-    public void logoutUser(Context ctx) {
-        decoder(ctx, UUID.class, userService::logoutUser);
+    public void logoutUser(Context context) { // DELETE /session
+        handler(context, (Context ctx) -> {
+            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            userService.logoutUser(token);
+            ctx.status(200);
+            ctx.result();
+        });
     }
 
-    public void listGames(Context ctx) {
-        ctx.result(transcoder(ctx, UUID.class, gameService::listGames));
+    public void listGames(Context context) {
+        handler(context, (Context ctx) -> {
+            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            var list = gameService.listGames(token);
+            ctx.status(200);
+            ctx.result(new Gson().toJson(list));
+        });
     }
 
-    public void newGame(Context ctx) {
-        ctx.result(transcoder(ctx, UUID.class, gameService::newGame));
+    public void newGame(Context context) {
+        handler(context, (Context ctx) -> {
+            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            var game = gameService.newGame(token);
+            ctx.status(200);
+            ctx.result("{\"gameID\":" + game + "}");
+        });
     }
 
-    public void joinGame(Context ctx) {
-        UUID authToken = new Gson().fromJson(ctx.header("authToken"), UUID.class);
-        JoinRequest req = new Gson().fromJson(ctx.body(), JoinRequest.class);
-        UserData user = userService.getUser(authService.getUsername(authToken));
-        gameService.joinGame(req, user);
+    public void joinGame(Context context) {
+        handler(context, (Context ctx) -> {
+            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            var req = new Gson().fromJson(ctx.body(), JoinRequest.class);
+            var user = authService.getUsername(token);
+            gameService.joinGame(req, user);
+
+            ctx.status(200);
+            ctx.result();
+        });
     }
 
     public void clearDatabase(Context ctx) {
         gameService.clearDatabase();
         userService.clearDatabase();
         authService.clearDatabase();
+        ctx.status(200);
+        ctx.result();
     }
 
-    private <T> void decoder(Context ctx, Class<T> clazz, Consumer<T> callback) {
-        T obj = new Gson().fromJson(ctx.body(), clazz);
-        callback.accept(obj);
-    }
-
-    private <T, R> String transcoder(Context ctx, Class<T> clazz, Function<T, R> callback) {
-        T obj = new Gson().fromJson(ctx.body(), clazz);
-        R result = callback.apply(obj);
-        return new Gson().toJson(result);
+    public void handler(Context ctx, Consumer<Context> callback) {
+        try {
+            callback.accept(ctx);
+        } catch (JsonSyntaxException e) {
+            ctx.status(400);
+            ctx.result("{\"message\":\"Error: bad request\"}");
+        } catch (NotAuthorizedError e) {
+            ctx.status(401);
+            ctx.result("{\"message\":\"Error: unauthorized\"}");
+        } catch (UserAlreadyRegisteredError e) {
+            ctx.status(403);
+            ctx.result("{\"message\":\"Error: already taken\"}");
+        } catch (Exception e) {
+            ctx.status(500);
+            ctx.result("{\"message\":\"Error: " + e.getMessage() + "\"}");
+        }
     }
 }
