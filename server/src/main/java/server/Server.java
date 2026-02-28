@@ -4,11 +4,8 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
-import io.javalin.http.Handler;
-import model.GameData;
 import model.JoinRequest;
 import model.UserData;
-import org.jetbrains.annotations.NotNull;
 import service.AuthService;
 import service.GameService;
 import service.UserService;
@@ -55,7 +52,9 @@ public class Server {
     }
 
     public void registerUser(Context ctx) {
-        decoder(ctx, UserData.class, userService::registerUser);
+        var user = new Gson().fromJson(ctx.body(), UserData.class);
+        userService.registerUser(user);
+        
     }
 
     public void loginUser(Context ctx) {
