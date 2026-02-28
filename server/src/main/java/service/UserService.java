@@ -39,4 +39,8 @@ public class UserService {
     public void clearDatabase() {
         db.clear();
     }
+
+    public UserData getUser(String username) {
+        return db.getUser(username);
+    }
 }

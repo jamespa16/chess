@@ -1,7 +1,6 @@
 package service;
 
 import dataaccess.AuthDAO;
-import model.AuthData;
 import model.UserData;
 
 import java.util.UUID;
@@ -31,5 +30,9 @@ public class AuthService {
 
     public boolean verify(UUID authToken) {
         return db.verify(authToken);
+    }
+
+    public String getUsername(UUID authToken) {
+        return db.getUsername(authToken);
     }
 }

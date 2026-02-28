@@ -10,6 +10,6 @@ public interface AuthDAO {
     AuthData getAuth(UserData user);
     void deleteAuth(UUID authToken);
     public void clear();
-
     boolean verify(UUID authToken);
+    String getUsername(UUID authToken);
 }

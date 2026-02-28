@@ -48,4 +48,14 @@ public class MemoryAuthDAO implements AuthDAO {
     public boolean verify(UUID authToken) {
         return db.stream().map(AuthData::authToken).anyMatch((UUID token) -> token == authToken);
     }
+
+    @Override
+    public String getUsername(UUID authToken) {
+        AuthData authData = db.stream()
+                .filter((AuthData auth) -> auth.authToken() == authToken)
+                .findFirst()
+                .orElseThrow(RuntimeException::new);
+
+        return authData.username();
+    }
 }
