@@ -28,4 +28,8 @@ public class AuthService {
     public void clearDatabase() {
         db.clear();
     }
+
+    public boolean verify(UUID authToken) {
+        return db.verify(authToken);
+    }
 }

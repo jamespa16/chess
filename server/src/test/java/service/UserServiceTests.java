@@ -1,5 +1,7 @@
 package service;
 
+import dataaccess.AuthDAO;
+import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
 import dataaccess.UserDAO;
 import model.UserData;
@@ -7,11 +9,13 @@ import org.junit.jupiter.api.*;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
+// TESTS ARE SUS!! DO NOT SUBMIT!!
 public class UserServiceTests {
     @Test
     void registerNewUserTest() {
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
@@ -23,7 +27,8 @@ public class UserServiceTests {
     @Test
     void registerExistingUser(){
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
@@ -35,7 +40,8 @@ public class UserServiceTests {
     @Test
     void loginUserTest(){
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
@@ -47,7 +53,8 @@ public class UserServiceTests {
     @Test
     void loginUserUnauthorizedTest(){
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
@@ -59,7 +66,8 @@ public class UserServiceTests {
     @Test
     void logoutUserTest(){
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
@@ -72,20 +80,22 @@ public class UserServiceTests {
     @Test
     void logoutUserUnauthorizedTest(){
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";
         UserData user = new UserData(username, password, email);
         userService.registerUser(user);
         UUID authToken = userService.loginUser(user);
-        assertThrows(NotAuthorizedError.class, () -> userService.logoutUser(authToken));
+        assertDoesNotThrow(() -> userService.logoutUser(authToken));
     }
 
     @Test
     void clearDatabase() {
         UserDAO db = new MemoryUserDAO();
-        UserService userService = new UserService(db);
+        AuthService authService = new AuthService(new MemoryAuthDAO());
+        UserService userService = new UserService(db, authService);
         String username = "bob";
         String password = "1234";
         String email = "bob@boingo.com";

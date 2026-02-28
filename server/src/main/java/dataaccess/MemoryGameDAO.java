@@ -3,14 +3,13 @@ package dataaccess;
 import chess.ChessGame;
 import model.GameData;
 
-import javax.swing.text.html.Option;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MemoryGameDAO implements GameDAO {
-    private Collection<GameData> gameList;
+    private final Collection<GameData> gameList;
 
     public MemoryGameDAO() {
         gameList = new HashSet<>();
@@ -28,7 +27,9 @@ public class MemoryGameDAO implements GameDAO {
         Optional<GameData> game = gameList.stream()
                 .filter(gameData -> gameData.gameID() == gameID)
                 .findFirst();
-        return game.ifPresentOrElse(null);
+        AtomicReference<GameData> result = new AtomicReference<>();
+        game.ifPresent(result::set);
+        return result.get();
     }
 
     @Override

@@ -11,9 +11,12 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class GameService {
-    GameDAO db;
-    public GameService(GameDAO db){
+    private final GameDAO db;
+    private final AuthService authService;
+
+    public GameService(GameDAO db, AuthService authService){
         this.db = db;
+        this.authService = authService;
     }
 
     public Collection<GameData> listGames(UUID authToken) {

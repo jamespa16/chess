@@ -43,4 +43,9 @@ public class MemoryAuthDAO implements AuthDAO {
     public void clear() {
         db.clear();
     }
+
+    @Override
+    public boolean verify(UUID authToken) {
+        return db.stream().map(AuthData::authToken).anyMatch((UUID token) -> token == authToken);
+    }
 }

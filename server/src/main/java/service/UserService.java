@@ -24,7 +24,12 @@ public class UserService {
     }
 
     public UUID loginUser(UserData user) {
-        return authService.getAuth(user);
+        UserData match = db.getUser(user.username());
+        if (match == user) {
+            return authService.createAuth(user);
+        } else {
+            throw new NotAuthorizedError();
+        }
     }
 
     public void logoutUser(UUID authToken) {

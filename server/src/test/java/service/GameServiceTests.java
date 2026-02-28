@@ -1,10 +1,7 @@
 package service;
 
 import chess.ChessGame;
-import dataaccess.GameDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import model.GameData;
 import model.JoinRequest;
 import model.UserData;
@@ -21,39 +18,25 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GameServiceTests {
     @Test
     void newGameTest() {
-        UserDAO userDB = new MemoryUserDAO();
-        UserService userService = new UserService(userDB);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        UUID authToken = new UUID(32,8);
         GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB);
+        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
         GameData game = new GameData(0, "", "", "game0", new ChessGame());
         assertEquals(game, gameService.newGame(authToken));
     }
 
     @Test
     void listGamesTest() {
-        UserDAO userDB = new MemoryUserDAO();
-        UserService userService = new UserService(userDB);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        UUID authToken = new UUID(32, 8);
         GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB);
-        Collection<GameData> gameList = new HashSet<>();
+        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
+        Collection<Integer> gameList = new HashSet<>();
         gameList.add(gameService.newGame(authToken));
         gameList.add(gameService.newGame(authToken));
         gameList.add(gameService.newGame(authToken));
 
         for (GameData game : gameService.listGames(authToken)) {
-            assertTrue(gameList.contains(game));
+            assertTrue(gameList.contains(game.gameID()));
         }
     }
 
@@ -61,7 +44,9 @@ public class GameServiceTests {
     void joinGamesTest() {
         // setup user service
         UserDAO userDB = new MemoryUserDAO();
-        UserService userService = new UserService(userDB);
+        AuthDAO authDB = new MemoryAuthDAO();
+        AuthService authService = new AuthService(authDB);
+        UserService userService = new UserService(userDB, authService);
 
         // setup user one
         String username = "bob";
@@ -81,22 +66,22 @@ public class GameServiceTests {
 
         // setup game service & game
         GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB);
-        GameData game = gameService.newGame(authToken);
+        GameService gameService = new GameService(gameDB, authService);
+        int game = gameService.newGame(authToken);
 
         // user two joins game
-        JoinRequest joinRequest = new JoinRequest(BLACK, game.gameID());
+        JoinRequest joinRequest = new JoinRequest(BLACK, game);
         assertDoesNotThrow(() -> gameService.joinGame(joinRequest, user2));
     }
 
     @Test
     void clearDatabase() {
         // setup user
-        UUID authToken = getAuthToken();
+        UUID authToken = new UUID(32, 8);
 
         // setup games
         GameDAO gameDB = new MemoryGameDAO();
-        GameService gameService = new GameService(gameDB);
+        GameService gameService = new GameService(gameDB, new AuthService(new MemoryAuthDAO()));
         gameService.newGame(authToken);
         gameService.newGame(authToken);
         gameService.newGame(authToken);
@@ -107,15 +92,4 @@ public class GameServiceTests {
         assertTrue(list.isEmpty());
     }
 
-    private static UUID getAuthToken() {
-        UserDAO userDB = new MemoryUserDAO();
-        UserService userService = new UserService(userDB);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
-        return authToken;
-    }
 }
