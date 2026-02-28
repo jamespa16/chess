@@ -53,7 +53,7 @@ public class UserServiceTests {
         String email = "bob@boingo.com";
         UserData user = new UserData(username, password, email);
         userService.registerUser(user);
-        assertThrows(UnauthorizedError.class, () -> userService.loginUser(new UserData(username, "bob", email)));
+        assertThrows(NotAuthorizedError.class, () -> userService.loginUser(new UserData(username, "bob", email)));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class UserServiceTests {
         UserData user = new UserData(username, password, email);
         userService.registerUser(user);
         UUID authToken = userService.loginUser(user);
-        assertThrows(UnauthorizedError.class, () -> userService.logoutUser(authToken));
+        assertThrows(NotAuthorizedError.class, () -> userService.logoutUser(authToken));
     }
 
     @Test

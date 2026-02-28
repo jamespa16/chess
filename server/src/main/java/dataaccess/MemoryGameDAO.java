@@ -1,10 +1,13 @@
 package dataaccess;
 
+import chess.ChessGame;
 import model.GameData;
 
+import javax.swing.text.html.Option;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 public class MemoryGameDAO implements GameDAO {
     private Collection<GameData> gameList;
@@ -15,15 +18,17 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public int createGame() {
-        return gameList.size();
+        int id = gameList.size();
+        gameList.add(new GameData(id, "", "", "", new ChessGame()));
+        return id;
     }
 
     @Override
     public GameData getGame(int gameID) {
-        return gameList.stream()
+        Optional<GameData> game = gameList.stream()
                 .filter(gameData -> gameData.gameID() == gameID)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
+        return game.ifPresentOrElse(null);
     }
 
     @Override

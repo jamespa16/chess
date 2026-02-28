@@ -31,7 +31,7 @@ public class GameServiceTests {
         UUID authToken = userService.loginUser(user);
         GameDAO gameDB = new MemoryGameDAO();
         GameService gameService = new GameService(gameDB);
-        GameData game = new GameData(0, "bob", "", "game0", new ChessGame());
+        GameData game = new GameData(0, "", "", "game0", new ChessGame());
         assertEquals(game, gameService.newGame(authToken));
     }
 
@@ -86,20 +86,13 @@ public class GameServiceTests {
 
         // user two joins game
         JoinRequest joinRequest = new JoinRequest(BLACK, game.gameID());
-        assertDoesNotThrow(() -> gameService.joinGame(joinRequest));
+        assertDoesNotThrow(() -> gameService.joinGame(joinRequest, user2));
     }
 
     @Test
     void clearDatabase() {
         // setup user
-        UserDAO userDB = new MemoryUserDAO();
-        UserService userService = new UserService(userDB);
-        String username = "bob";
-        String password = "1234";
-        String email = "bob@boingo.com";
-        UserData user = new UserData(username, password, email);
-        userService.registerUser(user);
-        UUID authToken = userService.loginUser(user);
+        UUID authToken = getAuthToken();
 
         // setup games
         GameDAO gameDB = new MemoryGameDAO();
@@ -112,5 +105,17 @@ public class GameServiceTests {
         gameService.clearDatabase();
         Collection<GameData> list = gameService.listGames(authToken);
         assertTrue(list.isEmpty());
+    }
+
+    private static UUID getAuthToken() {
+        UserDAO userDB = new MemoryUserDAO();
+        UserService userService = new UserService(userDB);
+        String username = "bob";
+        String password = "1234";
+        String email = "bob@boingo.com";
+        UserData user = new UserData(username, password, email);
+        userService.registerUser(user);
+        UUID authToken = userService.loginUser(user);
+        return authToken;
     }
 }
