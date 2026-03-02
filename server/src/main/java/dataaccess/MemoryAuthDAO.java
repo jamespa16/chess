@@ -2,6 +2,7 @@ package dataaccess;
 
 import model.AuthData;
 import model.UserData;
+import service.NotAuthorizedError;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,14 +17,9 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public AuthData createAuth(UserData user) {
-        try {
-            AuthData oldAuth =  getAuth(user);
-            return oldAuth;
-        } catch (DataAccessException e) { 
-            AuthData newAuth = new AuthData(UUID.randomUUID(), user.username());
-            this.db.add(newAuth);
-            return newAuth;
-        }
+        AuthData newAuth = new AuthData(UUID.randomUUID(), user.username());
+        this.db.add(newAuth);
+        return newAuth;
     }
 
     @Override
@@ -32,11 +28,17 @@ public class MemoryAuthDAO implements AuthDAO {
                 .filter((AuthData auth) -> auth.username().equals(user.username()))
                 .findFirst()
                 .orElseThrow(DataAccessException::new);
+
     }
 
     @Override
     public void deleteAuth(UUID authToken) {
-        db.removeIf((AuthData auth) -> authToken == auth.authToken());
+        var token = db.stream()
+            .filter((AuthData auth) -> authToken.equals(auth.authToken()))
+            .findFirst()
+            .orElseThrow(NotAuthorizedError::new);
+
+        db.remove(token);
     }
 
     @Override
@@ -46,15 +48,15 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public boolean verify(UUID authToken) {
-        return db.stream().map(AuthData::authToken).anyMatch((UUID token) -> token == authToken);
+        return db.stream().map(AuthData::authToken).anyMatch((UUID token) -> token.equals(authToken));
     }
 
     @Override
     public String getUsername(UUID authToken) {
         AuthData authData = db.stream()
-                .filter((AuthData auth) -> auth.authToken() == authToken)
+                .filter((AuthData auth) -> auth.authToken().equals(authToken))
                 .findFirst()
-                .orElseThrow(RuntimeException::new);
+                .orElseThrow(NotAuthorizedError::new);
 
         return authData.username();
     }

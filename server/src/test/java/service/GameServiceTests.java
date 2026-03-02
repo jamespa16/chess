@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.util.HashSet;
 import java.util.UUID;
 
-import static chess.ChessGame.TeamColor.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 // TESTS NOT FULLY IMPLEMENTED!!
@@ -25,7 +24,7 @@ public class GameServiceTests {
     void newGameTest() {
         var gameService = setup();
         var authToken = getAuthToken();
-        assertEquals(0, gameService.newGame(authToken));
+        assertEquals(1, gameService.newGame(authToken, "game"));
     }
 
     @Test
@@ -33,9 +32,9 @@ public class GameServiceTests {
         var authToken = getAuthToken();
         var gameService = setup();
         var gameList = new HashSet<>();
-        gameList.add(gameService.newGame(authToken));
-        gameList.add(gameService.newGame(authToken));
-        gameList.add(gameService.newGame(authToken));
+        gameList.add(gameService.newGame(authToken, "game1"));
+        gameList.add(gameService.newGame(authToken, "game2"));
+        gameList.add(gameService.newGame(authToken, "game3"));
 
         for (var game : gameService.listGames(authToken)) {
             assertTrue(gameList.contains(game.gameID()));
@@ -68,11 +67,11 @@ public class GameServiceTests {
         // setup game service & game
         var gameDB = new MemoryGameDAO();
         var gameService = new GameService(gameDB, authService);
-        var game = gameService.newGame(authToken);
+        var game = gameService.newGame(authToken, "game");
 
         // user two joins game
-        var joinRequest = new JoinRequest(BLACK, game);
-        assertDoesNotThrow(() -> gameService.joinGame(joinRequest, username2));
+        var joinRequest = new JoinRequest("BLACK", game);
+        assertDoesNotThrow(() -> gameService.joinGame(authToken, joinRequest, username2));
     }
 
     @Test
@@ -82,9 +81,9 @@ public class GameServiceTests {
 
         // setup games
         var gameService = setup();
-        gameService.newGame(authToken);
-        gameService.newGame(authToken);
-        gameService.newGame(authToken);
+        gameService.newGame(authToken, "game1");
+        gameService.newGame(authToken, "game2");
+        gameService.newGame(authToken, "game3");
 
         // clear & test
         gameService.clearDatabase();

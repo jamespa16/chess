@@ -4,9 +4,9 @@ import model.GameData;
 import java.util.Collection;
 
 public interface GameDAO {
-    int createGame();
+    int createGame(String gameName);
     GameData getGame(int gameID);
-    Collection<GameData> listGames();
+Collection<GameData> listGames();
     void updateGame(GameData newGameState);
     public void clear();
 }

@@ -5,8 +5,7 @@ import model.GameData;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import com.google.gson.JsonSyntaxException;
 
 public class MemoryGameDAO implements GameDAO {
     private final Collection<GameData> gameList;
@@ -16,20 +15,24 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public int createGame() {
-        int id = gameList.size();
-        gameList.add(new GameData(id, "", "", "", new ChessGame()));
+    public int createGame(String gameName) {
+        if (gameName == null) {
+            throw new JsonSyntaxException("");
+        }
+        int id = gameList.size() + 1;
+        gameList.add(new GameData(id, null, null, gameName, new ChessGame()));
         return id;
     }
 
     @Override
     public GameData getGame(int gameID) {
-        Optional<GameData> game = gameList.stream()
-                .filter(gameData -> gameData.gameID() == gameID)
-                .findFirst();
-        AtomicReference<GameData> result = new AtomicReference<>();
-        game.ifPresent(result::set);
-        return result.get();
+        GameData[] list = gameList.toArray(new GameData[gameList.size()]);
+        for (GameData data : list) {
+            if (data.gameID() == gameID) {
+                return data;
+            }
+        }
+        throw new DataAccessException();
     }
 
     @Override

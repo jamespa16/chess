@@ -6,6 +6,8 @@ import model.UserData;
 
 import java.util.UUID;
 
+import com.google.gson.JsonSyntaxException;
+
 public class UserService {
     private final UserDAO db;
     private final AuthService authService;
@@ -24,8 +26,11 @@ public class UserService {
     }
 
     public UUID loginUser(LoginRequest request) {
+        if(request.username() == null || request.password() == null) {
+            throw new JsonSyntaxException("");
+        }
         UserData match = db.getUser(request.username());
-        if (match.password() == request.password()) {
+        if (match != null && match.password().equals(request.password())) {
             return authService.createAuth(match);
         } else {
             throw new NotAuthorizedError();

@@ -1,13 +1,16 @@
 package service;
 
-import static chess.ChessGame.TeamColor.*;
 import dataaccess.GameDAO;
 import model.GameData;
+import model.GameDataReport;
 import model.JoinRequest;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.function.Supplier;
+
+import com.google.gson.JsonSyntaxException;
 
 public class GameService {
     private final GameDAO db;
@@ -18,18 +21,31 @@ public class GameService {
         this.authService = authService;
     }
 
-    public Collection<GameData> listGames(UUID authToken) {
-        return secure(authToken, db::listGames);
+    public Collection<GameDataReport> listGames(UUID authToken) {
+        var gameList = secure(authToken, db::listGames);
+        Collection<GameDataReport> report = new HashSet<>();
+        for (GameData game : gameList) {
+            report.add(new GameDataReport(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName()));
+        }
+        return report;
     }
 
-    public int newGame(UUID authToken) {
-        return secure(authToken, db::createGame);
+    public int newGame(UUID authToken, String gameName) {
+        return secure(authToken, () -> {return db.createGame(gameName);});
     }
 
-    public void joinGame(JoinRequest joinRequest, String user) {
+    public void joinGame(UUID authToken, JoinRequest joinRequest, String user) {
+        if (!authService.verify(authToken)) {
+            throw new NotAuthorizedError();
+        }
+
+        if (joinRequest.gameID() == null || joinRequest.playerColor() == null) {
+            throw new JsonSyntaxException("bad req: null in joinReq");
+        }
+
         GameData game = db.getGame(joinRequest.gameID());
-        if (joinRequest.color() == WHITE) {
-            if (game.whiteUsername().isEmpty()) {
+        if (joinRequest.playerColor().equals("WHITE")) {
+            if (game.whiteUsername() == null) {
                 db.updateGame(new GameData(
                         game.gameID(),
                         user,
@@ -37,10 +53,10 @@ public class GameService {
                         game.gameName(),
                         game.game()));
             } else {
-                throw new GameAlreadyJoinedError();
+                throw new UserAlreadyRegisteredError();
             }
-        } else {
-            if (game.blackUsername().isEmpty()) {
+        } else if (joinRequest.playerColor().equals("BLACK")) {
+            if (game.blackUsername() == null) {
                 db.updateGame(new GameData(
                         game.gameID(),
                         game.whiteUsername(),
@@ -48,9 +64,13 @@ public class GameService {
                         game.gameName(),
                         game.game()));
             } else {
-                throw new GameAlreadyJoinedError();
+                throw new UserAlreadyRegisteredError();
             }
+        } else {
+            throw new JsonSyntaxException("invalid color");
         }
+
+
     }
 
     public void clearDatabase() {

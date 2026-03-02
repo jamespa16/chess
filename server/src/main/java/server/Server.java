@@ -74,7 +74,7 @@ public class Server {
 
     public void logoutUser(Context context) { // DELETE /session
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            var token = UUID.fromString(new Gson().fromJson(ctx.header("authorization"), String.class));
             userService.logoutUser(token);
             ctx.status(200);
             ctx.result();
@@ -83,17 +83,18 @@ public class Server {
 
     public void listGames(Context context) {
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
-            var list = gameService.listGames(token);
+            var token = UUID.fromString(new Gson().fromJson(ctx.header("authorization"), String.class));
+            var report = new GameReport(gameService.listGames(token));
             ctx.status(200);
-            ctx.result(new Gson().toJson(list));
+            ctx.result(new Gson().toJson(report));
         });
     }
 
     public void newGame(Context context) {
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
-            var game = gameService.newGame(token);
+            var token = UUID.fromString(new Gson().fromJson(ctx.header("authorization"), String.class));
+            var req = new Gson().fromJson(ctx.body(), GameRequest.class);
+            var game = gameService.newGame(token, req.gameName());
             ctx.status(200);
             ctx.result("{\"gameID\":" + game + "}");
         });
@@ -101,15 +102,20 @@ public class Server {
 
     public void joinGame(Context context) {
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            var token = UUID.randomUUID();
+            try {
+                token = new Gson().fromJson(ctx.header("authorization"), UUID.class);
+            } catch (Exception e) {
+                throw new NotAuthorizedError();
+            }
             var req = new Gson().fromJson(ctx.body(), JoinRequest.class);
             var user = authService.getUsername(token);
-            gameService.joinGame(req, user);
-
+            gameService.joinGame(token, req, user);
+            
             ctx.status(200);
             ctx.result();
         });
-    }
+     }
 
     public void clearDatabase(Context ctx) {
         gameService.clearDatabase();
