@@ -11,7 +11,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// TESTS NOT FULLY IMPLEMENTED!!
 public class GameServiceTests {
     private final String username = "bob";
     private final String password = "1234";

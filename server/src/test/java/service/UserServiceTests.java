@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
-// TESTS ARE SUS!! DO NOT SUBMIT!!
 public class UserServiceTests {
     private final String username = "bob";
     private final String password = "1234";
