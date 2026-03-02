@@ -28,6 +28,13 @@ public class GameServiceTests {
     }
 
     @Test
+    void newGameUnauthorizedTest() {
+        var gameService = setup();
+        var authToken = UUID.randomUUID();
+        assertThrows(NotAuthorizedError.class, () -> gameService.newGame(authToken, "game"));
+    }
+
+    @Test
     void listGamesTest() {
         var authToken = getAuthToken();
         var gameService = setup();
@@ -39,6 +46,18 @@ public class GameServiceTests {
         for (var game : gameService.listGames(authToken)) {
             assertTrue(gameList.contains(game.gameID()));
         }
+    }
+
+    @Test
+    void listGamesUnauthorizedTest() {
+        var authToken = getAuthToken();
+        var gameService = setup();
+        var gameList = new HashSet<>();
+        gameList.add(gameService.newGame(authToken, "game1"));
+        gameList.add(gameService.newGame(authToken, "game2"));
+        gameList.add(gameService.newGame(authToken, "game3"));
+
+        assertThrows(NotAuthorizedError.class, () -> gameService.listGames(new UUID(0, 0)));
     }
 
     @Test
@@ -72,6 +91,39 @@ public class GameServiceTests {
         // user two joins game
         var joinRequest = new JoinRequest("BLACK", game);
         assertDoesNotThrow(() -> gameService.joinGame(authToken, joinRequest, username2));
+    }
+
+    @Test
+    void joinGamesNoGameTest() {
+        // setup user service
+        var userDB = new MemoryUserDAO();
+        var authDB = new MemoryAuthDAO();
+        var authService = new AuthService(authDB);
+        var userService = new UserService(userDB, authService);
+
+        // setup user one
+        var username = "bob";
+        var password = "1234";
+        var email = "bob@boingo.com";
+        var user = new UserData(username, password, email);
+        userService.registerUser(user);
+        
+
+        // setup user two
+        var username2 = "dole";
+        var password2 = "abcd";
+        var email2 = "dole@boingo.com";
+        var user2 = new UserData(username2, password2, email2);
+        userService.registerUser(user2);
+
+        var authToken = userService.loginUser(new LoginRequest(username, password));
+        // setup game service & game
+        var gameDB = new MemoryGameDAO();
+        var gameService = new GameService(gameDB, authService);
+
+        // user two joins game that does not exist
+        var joinRequest = new JoinRequest("BLACK", -1);
+        assertThrows(DataAccessException.class, () -> gameService.joinGame(authToken, joinRequest, username2));
     }
 
     @Test

@@ -81,7 +81,7 @@ public class Server {
         });
     }
 
-    public void listGames(Context context) {
+    public void listGames(Context context) { // GET /game
         handler(context, (Context ctx) -> {
             var token = UUID.fromString(new Gson().fromJson(ctx.header("authorization"), String.class));
             var report = new GameReport(gameService.listGames(token));
@@ -90,7 +90,7 @@ public class Server {
         });
     }
 
-    public void newGame(Context context) {
+    public void newGame(Context context) { // POST /game
         handler(context, (Context ctx) -> {
             var token = UUID.fromString(new Gson().fromJson(ctx.header("authorization"), String.class));
             var req = new Gson().fromJson(ctx.body(), GameRequest.class);
@@ -100,7 +100,7 @@ public class Server {
         });
     }
 
-    public void joinGame(Context context) {
+    public void joinGame(Context context) { // PUT /game
         handler(context, (Context ctx) -> {
             var token = UUID.randomUUID();
             try {
@@ -117,7 +117,7 @@ public class Server {
         });
      }
 
-    public void clearDatabase(Context ctx) {
+    public void clearDatabase(Context ctx) { // DELETE /db
         gameService.clearDatabase();
         userService.clearDatabase();
         authService.clearDatabase();
@@ -125,9 +125,10 @@ public class Server {
         ctx.result();
     }
 
-    public void handler(Context ctx, Consumer<Context> callback) {
+    // All in one error handler function
+    public void handler(Context ctx, Consumer<Context> endpoint) { 
         try {
-            callback.accept(ctx);
+            endpoint.accept(ctx);
         } catch (JsonSyntaxException e) {
             ctx.status(400);
             ctx.result("{\"message\":\"Error: bad request\"}");
