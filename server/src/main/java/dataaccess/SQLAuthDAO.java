@@ -4,6 +4,7 @@ import model.AuthData;
 import model.UserData;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
 import java.util.function.Function;
@@ -41,13 +42,12 @@ public class SQLAuthDAO implements AuthDAO {
     @Override
     public AuthData getAuth(UserData user) {
         var query = "SELECT * FROM AuthTable WHERE username=?";
-        return sqlQuery((db) -> {
-            try (var command = db.prepareStatement(query)) {
+        return sqlQuery(query, (command) -> {
+            try {
                 command.setString(1, user.username());
-                try (var result = command.executeQuery()) {
-                    return new AuthData(UUID.fromString(result.getString("authToken")),
-                            result.getString("username"));
-                }
+                var result = command.executeQuery();
+                return new AuthData(UUID.fromString(result.getString("authToken")),
+                        result.getString("username"));
             } catch (SQLException e) {
                 throw new DataAccessException("auth not found");
             }
@@ -56,27 +56,54 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void deleteAuth(UUID authToken) {
-
+        var query = "DELETE * FROM AuthTable WHERE username=?";
+        sqlQuery(query, (command) -> {
+           try {
+               command.setString(1, authToken.toString());
+               command.executeQuery();
+               return 0;
+           } catch (SQLException e) {
+               throw new DataAccessException("auth not found");
+           }
+        });
     }
 
     @Override
     public void clear() {
-
+        var query = "DELETE * FROM AuthTable";
+        sqlQuery(query, (command) -> {
+            try {
+                command.executeQuery();
+                return 0;
+            } catch (SQLException e) {
+                throw new DataAccessException("clear failed");
+            }
+        });
     }
 
     @Override
     public boolean verify(UUID authToken) {
-        return false;
+        return this.getUsername(authToken) != null;
     }
 
     @Override
     public String getUsername(UUID authToken) {
-        return "";
+        var query = "SELECT * FROM AuthTable WHERE authToken=?";
+        return sqlQuery(query, (command) -> {
+            try {
+                command.setString(1, authToken.toString());
+                var result = command.executeQuery();
+                return result.getString("username");
+            } catch (SQLException e) {
+                throw new DataAccessException("auth not found");
+            }
+        });
     }
 
-    private <T> T sqlQuery(Function<Connection, T> exec) {
+    private <T> T sqlQuery(String query, Function<PreparedStatement, T> exec) {
         try (var db = DatabaseManager.getConnection()) {
-            return exec.apply(db);
+            var command = db.prepareStatement(query);
+            return exec.apply(command);
         } catch (SQLException e) {
             throw new DataAccessException("SQL query failed");
         }
