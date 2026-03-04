@@ -2,6 +2,7 @@ package dataaccess;
 
 import java.sql.*;
 import java.util.Properties;
+import java.util.function.Function;
 
 public class DatabaseManager {
     private static String databaseName;
@@ -49,6 +50,15 @@ public class DatabaseManager {
             return conn;
         } catch (SQLException ex) {
             throw new DataAccessException("failed to get connection", ex);
+        }
+    }
+
+    static <T> T runSQLCommand(String query, Function<PreparedStatement, T> exec) {
+        try (var db = DatabaseManager.getConnection()) {
+            var command = db.prepareStatement(query);
+            return exec.apply(command);
+        } catch (SQLException e) {
+            throw new DataAccessException("SQL command failed");
         }
     }
 
