@@ -14,7 +14,7 @@ public class SQLAuthDAOTests {
 
     @Test
     void createTableTest() {
-        assertDoesNotThrow(() -> new SQLAuthDAO());
+        assertDoesNotThrow(SQLAuthDAO::new);
     }
 
     @Test
@@ -40,7 +40,7 @@ public class SQLAuthDAOTests {
     @Test
     void clearTest() {
         var db = new SQLAuthDAO();
-        assertDoesNotThrow(() -> db.clear());
+        assertDoesNotThrow(db::clear);
     }
 
     @Test 

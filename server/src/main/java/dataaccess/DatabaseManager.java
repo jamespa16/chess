@@ -55,7 +55,7 @@ public class DatabaseManager {
 
     static <T> T runSQLCommand(String query, Function<PreparedStatement, T> exec) {
         try (var db = DatabaseManager.getConnection()) {
-            var command = db.prepareStatement(query);
+            var command = db.prepareStatement(query, 1);
             return exec.apply(command);
         } catch (SQLException e) {
             throw new DataAccessException("SQL command failed");

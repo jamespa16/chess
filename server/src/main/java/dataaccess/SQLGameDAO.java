@@ -17,7 +17,7 @@ public class SQLGameDAO implements GameDAO {
                 whiteUsername VARCHAR(255),
                 blackUsername VARCHAR(255),
                 gameName VARCHAR(255),
-                game longtext,
+                game JSON,
                 PRIMARY KEY (gameID));""";
         DatabaseManager.createDatabase();
         DatabaseManager.runSQLCommand(query, (command) -> {
@@ -32,16 +32,18 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public int createGame(String gameName) {
-        var query = "INSERT INTO GameTable (whiteUsername, blackUsername, gameName, game) VALUES=(NULL, NULL, ?, ?)";
+        var query = "INSERT INTO GameTable (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
         return DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.setString(1, gameName);
-                command.setString(2, new Gson().toJson(new ChessGame()));
-                command.executeQuery();
+                command.setString(1, "");
+                command.setString(2, "");
+                command.setString(3, gameName);
+                command.setString(4, new Gson().toJson(new ChessGame()));
+                command.executeUpdate();
 
                 var result = command.getGeneratedKeys();
                 if(result.next()) {
-                    return result.getInt("gameID");
+                    return result.getInt(1);
                 }
 
                 throw new DataAccessException("create game failed");
@@ -87,17 +89,18 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void updateGame(GameData newGameState) {
-        var query = "UPDATE GameTable SET (whiteUsername, blackUsername, gameName, game) VALUES (?,?,?,?) WHERE gameID=?";
+        var query = "UPDATE GameTable SET whiteUsername=?, blackUsername=?, gameName=?, game=? WHERE gameID=?";
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
                 command.setString(1, newGameState.whiteUsername());
                 command.setString(2, newGameState.blackUsername());
                 command.setString(3, newGameState.gameName());
                 command.setString(4, new Gson().toJson(newGameState.game()));
+                command.setInt(5, newGameState.gameID());
 
-                command.executeQuery();
+                command.executeUpdate();
             } catch (SQLException e) {
-                throw new DataAccessException("update failed");
+                throw new DataAccessException(e.getMessage());
             }
             return 0;
         });
@@ -105,10 +108,10 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void clear() {
-        var query = "DROP * FROM GameTable";
+        var query = "TRUNCATE TABLE GameTable";
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.executeQuery();
+                command.executeUpdate();
             } catch (SQLException e) {
                 throw new DataAccessException("clear failed");
             }

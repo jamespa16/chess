@@ -15,7 +15,7 @@ public class SQLUserDAOTests {
 
     @Test
     void createTableTest(){
-        assertDoesNotThrow(() -> new SQLUserDAO());
+        assertDoesNotThrow(SQLUserDAO::new);
     }
 
     @Test
@@ -35,6 +35,6 @@ public class SQLUserDAOTests {
     void clear() {
         var db = new SQLUserDAO();
         db.createUser(user);
-        assertDoesNotThrow(() -> db.clear());
+        assertDoesNotThrow(db::clear);
     }
 }
