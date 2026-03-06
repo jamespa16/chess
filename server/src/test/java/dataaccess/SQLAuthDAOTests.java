@@ -10,7 +10,8 @@ public class SQLAuthDAOTests {
     private String username = "bob";
     private String email = "bob@boingo.com";
     private String password = "1234";
-    private UserData user = new UserData(username, email, password);
+    private UserData user = new UserData(username, password, email);
+
     @Test
     void createTableTest() {
         assertDoesNotThrow(() -> new SQLAuthDAO());

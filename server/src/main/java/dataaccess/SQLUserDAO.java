@@ -26,7 +26,7 @@ public class SQLUserDAO implements UserDAO{
                 command.setString(1, user.username());
                 command.setString(2, user.email());
                 command.setString(3, user.password());
-                command.executeQuery();
+                command.executeUpdate();
                 return 0;
             } catch (Exception e) {
                 throw new DataAccessException("create user failed");
@@ -41,6 +41,7 @@ public class SQLUserDAO implements UserDAO{
             try{
                 command.setString(1, username);
                 var result = command.executeQuery();
+                result.next();
                 return new UserData(result.getString("username"), result.getString("email"), result.getString("password"));
             } catch (Exception e) {
                 throw new DataAccessException("getUser failed");
@@ -50,10 +51,10 @@ public class SQLUserDAO implements UserDAO{
 
     @Override
     public void clear() {
-        var query = "DROP * FROM UserTable";
+        var query = "TRUNCATE TABLE UserTable";
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.executeQuery();
+                command.executeUpdate();
             } catch (SQLException e) {
                 throw new DataAccessException("clear failed");
             }
