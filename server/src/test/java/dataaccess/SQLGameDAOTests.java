@@ -4,6 +4,7 @@ import model.GameData;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
@@ -62,5 +63,32 @@ public class SQLGameDAOTests {
         var db = new SQLGameDAO();
         db.createGame("game");
         assertDoesNotThrow(db::clear);
+    }
+
+    @Test
+    void getFakeGameTest() {
+        var db = new SQLGameDAO();
+        assertThrows(DataAccessException.class, () -> db.getGame(1));
+    }
+
+    @Test
+    void listNoGamesTest() {
+        var db = new SQLGameDAO();
+        Collection<Integer> list = new HashSet<>();
+
+        for (Integer game : list) {
+            assertTrue(
+                db.listGames()
+                .stream()
+                .anyMatch((data) -> data.gameID() == game.intValue())
+            );
+        }
+    }
+
+    @Test 
+    void updateFakeGame() {
+        var db = new SQLGameDAO();
+        var newGame = new GameData(1, "bob", "boing", "gameBOB", new ChessGame());
+        assertDoesNotThrow(() -> db.updateGame(newGame));
     }
 }

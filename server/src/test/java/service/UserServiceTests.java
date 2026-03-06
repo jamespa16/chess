@@ -5,7 +5,6 @@ import dataaccess.MemoryUserDAO;
 import model.LoginRequest;
 import model.UserData;
 import org.junit.jupiter.api.*;
-import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTests {
@@ -33,7 +32,7 @@ public class UserServiceTests {
     @Test
     void loginUserTest(){
         var userService = setup();
-        assertInstanceOf(UUID.class, userService.loginUser(req));
+        assertInstanceOf(String.class, userService.loginUser(req));
     }
 
     @Test

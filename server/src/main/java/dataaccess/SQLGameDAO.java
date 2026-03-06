@@ -28,6 +28,7 @@ public class SQLGameDAO implements GameDAO {
                 throw new DataAccessException("table creation failed");
             }
         });
+        this.clear();
     }
 
     @Override

@@ -2,6 +2,7 @@ package dataaccess;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,5 +37,19 @@ public class SQLUserDAOTests {
         var db = new SQLUserDAO();
         db.createUser(user);
         assertDoesNotThrow(db::clear);
+    }
+
+        @Test
+    void createTwoOfUser() {
+        var db = new SQLUserDAO();
+        db.createUser(user);
+        assertThrows(DataAccessException.class, () -> db.createUser(user));
+    }
+
+    @Test
+    void getFakeUser() {
+        var db = new SQLUserDAO();
+        db.createUser(user);
+        assertEquals(user, db.getUser(username));
     }
 }

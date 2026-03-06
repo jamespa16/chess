@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.UUID;
+
 
 public class SQLAuthDAOTests {
     private String username = "bob";
@@ -55,5 +57,36 @@ public class SQLAuthDAOTests {
         var db = new SQLAuthDAO();
         var auth = db.createAuth(user);
         assertEquals(db.getUsername(auth.authToken()), username);
+    }
+
+    @Test
+    void createTwoAuthTest() {
+        var db = new SQLAuthDAO();
+        db.createAuth(user);
+        assertDoesNotThrow(() -> db.createAuth(user));
+    }
+
+    @Test
+    void getFakeAuthTest() {
+        var db = new SQLAuthDAO();
+        assertThrows(DataAccessException.class, () -> db.getAuth(user));
+    }
+
+    @Test
+    void deleteFakeAuthTest() {
+        var db = new SQLAuthDAO();
+        assertDoesNotThrow(() -> db.deleteAuth(UUID.randomUUID().toString()));
+    }
+
+    @Test 
+    void verifyNoAuthTest() {
+        var db = new SQLAuthDAO();
+        assertThrows(DataAccessException.class, () -> db.verify(UUID.randomUUID().toString()));
+    }
+
+    @Test
+    void getFakeUsernameTest() {
+        var db = new SQLAuthDAO();
+        assertThrows(DataAccessException.class, () -> db.getUsername(UUID.randomUUID().toString()));
     }
 }
