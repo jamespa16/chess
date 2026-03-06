@@ -23,12 +23,14 @@ public class SQLGameDAOTests {
     @Test
     void createGameTest() {
         var db = new SQLGameDAO();
+        db.clear();
         assertDoesNotThrow(() -> db.createGame("game"));
     }
 
     @Test
     void getGameTest() {
         var db = new SQLGameDAO();
+        db.clear();
         var id = db.createGame("game");
         assertEquals(id, db.getGame(id).gameID());
     }
@@ -36,6 +38,7 @@ public class SQLGameDAOTests {
     @Test
     void listGamesTest() {
         var db = new SQLGameDAO();
+        db.clear();
         Collection<Integer> list = new HashSet<>();
         list.add(db.createGame("game1"));
         list.add(db.createGame("game2"));
@@ -53,6 +56,7 @@ public class SQLGameDAOTests {
     @Test 
     void updateGame() {
         var db = new SQLGameDAO();
+        db.clear();
         var game = db.createGame("game");
         var newGame = new GameData(game, "bob", "boing", "gameBOB", new ChessGame());
         assertDoesNotThrow(() -> db.updateGame(newGame));
@@ -68,12 +72,14 @@ public class SQLGameDAOTests {
     @Test
     void getFakeGameTest() {
         var db = new SQLGameDAO();
+        db.clear();
         assertThrows(DataAccessException.class, () -> db.getGame(1));
     }
 
     @Test
     void listNoGamesTest() {
         var db = new SQLGameDAO();
+        db.clear();
         Collection<Integer> list = new HashSet<>();
 
         for (Integer game : list) {
@@ -88,6 +94,7 @@ public class SQLGameDAOTests {
     @Test 
     void updateFakeGame() {
         var db = new SQLGameDAO();
+        db.clear();
         var newGame = new GameData(1, "bob", "boing", "gameBOB", new ChessGame());
         assertDoesNotThrow(() -> db.updateGame(newGame));
     }

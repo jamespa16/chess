@@ -110,12 +110,14 @@ public class Server {
         });
      }
 
-    public void clearDatabase(Context ctx) { // DELETE /db
-        gameService.clearDatabase();
-        userService.clearDatabase();
-        authService.clearDatabase();
-        ctx.status(200);
-        ctx.result();
+    public void clearDatabase(Context context) { // DELETE /db
+        handler(context, (ctx)->{
+            gameService.clearDatabase();
+            userService.clearDatabase();
+            authService.clearDatabase();
+            ctx.status(200);
+            ctx.result();
+        });
     }
 
     // All in one error handler function

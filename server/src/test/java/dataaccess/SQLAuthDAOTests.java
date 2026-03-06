@@ -24,12 +24,14 @@ public class SQLAuthDAOTests {
     @Test
     void createAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         assertDoesNotThrow(() -> db.createAuth(user));
     }
 
     @Test
     void getAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         var auth = db.createAuth(user);
         assertEquals(auth, db.getAuth(user));
     }
@@ -37,6 +39,7 @@ public class SQLAuthDAOTests {
     @Test
     void deleteAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         var auth = db.createAuth(user);
         assertDoesNotThrow(() -> db.deleteAuth(auth.authToken()));
     }
@@ -50,6 +53,7 @@ public class SQLAuthDAOTests {
     @Test 
     void verifyTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         var auth = db.createAuth(user);
         assertTrue(db.verify(auth.authToken()));
     }
@@ -57,6 +61,7 @@ public class SQLAuthDAOTests {
     @Test
     void getUsernameTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         var auth = db.createAuth(user);
         assertEquals(db.getUsername(auth.authToken()), username);
     }
@@ -64,6 +69,7 @@ public class SQLAuthDAOTests {
     @Test
     void createTwoAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         db.createAuth(user);
         assertDoesNotThrow(() -> db.createAuth(user));
     }
@@ -71,24 +77,28 @@ public class SQLAuthDAOTests {
     @Test
     void getFakeAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         assertThrows(NotAuthorizedError.class, () -> db.getAuth(user));
     }
 
     @Test
     void deleteFakeAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         assertThrows(NotAuthorizedError.class, () -> db.deleteAuth(UUID.randomUUID().toString()));
     }
 
     @Test 
     void verifyNoAuthTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         assertThrows(NotAuthorizedError.class, () -> db.verify(UUID.randomUUID().toString()));
     }
 
     @Test
     void getFakeUsernameTest() {
         var db = new SQLAuthDAO();
+        db.clear();
         assertThrows(NotAuthorizedError.class, () -> db.getUsername(UUID.randomUUID().toString()));
     }
 }

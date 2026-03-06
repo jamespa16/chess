@@ -16,7 +16,6 @@ public class SQLUserDAO implements UserDAO {
                 throw new DataAccessException("table creation failed");
             }
         });
-        this.clear();
     }
 
     @Override
@@ -42,20 +41,19 @@ public class SQLUserDAO implements UserDAO {
     public UserData getUser(String username) {
         var query = "SELECT * FROM UserTable WHERE username=?";
         UserData user = null;
-        try {
-            user = DatabaseManager.runSQLCommand(query, (command) -> {
+        user = DatabaseManager.runSQLCommand(query, (command) -> {
             try {
                 command.setString(1, username);
                 var result = command.executeQuery();
-                result.next();
-                return new UserData(result.getString("username"), result.getString("password"), result.getString("email"));
-            } catch (Exception e) {
+                if (result.next()) {
+                    return new UserData(result.getString("username"), result.getString("password"), result.getString("email"));
+                } else {
+                    return null;
+                }
+            } catch (SQLException e) {
                 throw new DataAccessException("getUser failed");
             }
-            });
-        } catch (DataAccessException e) {
-
-        }
+        });
         return user;
     }
 

@@ -4,6 +4,8 @@ import dataaccess.UserDAO;
 import model.LoginRequest;
 import model.UserData;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.google.gson.JsonSyntaxException;
 
 public class UserService {
@@ -17,7 +19,8 @@ public class UserService {
 
     public void registerUser(UserData user) {
         if(db.getUser(user.username()) == null) {
-            db.createUser(user);
+            var secureUser = new UserData(user.username(), BCrypt.hashpw(user.password(), BCrypt.gensalt()), user.email());
+            db.createUser(secureUser);
         } else {
             throw new UserAlreadyRegisteredError();
         }
@@ -28,7 +31,7 @@ public class UserService {
             throw new JsonSyntaxException("");
         }
         UserData match = db.getUser(request.username());
-        if (match != null && match.password().equals(request.password())) {
+        if (match != null && BCrypt.checkpw(request.password(), match.password())) {
             return authService.createAuth(match);
         } else {
             throw new NotAuthorizedError();

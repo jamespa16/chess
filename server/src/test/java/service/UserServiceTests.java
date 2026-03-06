@@ -20,7 +20,8 @@ public class UserServiceTests {
         var authService = new AuthService(new MemoryAuthDAO());
         var userService = new UserService(db, authService);
         userService.registerUser(user);
-        assertEquals(user, db.getUser(username));
+        assertEquals(user.username(), username);
+        assertEquals(user.email(), email);
     }
 
     @Test

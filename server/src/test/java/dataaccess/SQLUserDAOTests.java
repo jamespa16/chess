@@ -22,12 +22,14 @@ public class SQLUserDAOTests {
     @Test
     void createUser() {
         var db = new SQLUserDAO();
+        db.clear();
         assertDoesNotThrow(() -> db.createUser(user));
     }
 
     @Test
     void getUser() {
         var db = new SQLUserDAO();
+        db.clear();
         db.createUser(user);
         assertEquals(user, db.getUser(username));
     }
@@ -35,13 +37,13 @@ public class SQLUserDAOTests {
     @Test
     void clear() {
         var db = new SQLUserDAO();
-        db.createUser(user);
         assertDoesNotThrow(db::clear);
     }
 
         @Test
     void createTwoOfUser() {
         var db = new SQLUserDAO();
+        db.clear();
         db.createUser(user);
         assertThrows(DataAccessException.class, () -> db.createUser(user));
     }
@@ -49,6 +51,7 @@ public class SQLUserDAOTests {
     @Test
     void getFakeUser() {
         var db = new SQLUserDAO();
+        db.clear();
         db.createUser(user);
         assertEquals(user, db.getUser(username));
     }

@@ -20,7 +20,6 @@ public class SQLAuthDAO implements AuthDAO {
                 throw new DataAccessException("table creation failed");
             }
         });
-        this.clear();
     }
 
     @Override
