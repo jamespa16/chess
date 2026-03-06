@@ -2,6 +2,8 @@ package dataaccess;
 
 import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 import model.GameData;
 
 import java.sql.ResultSet;
@@ -33,11 +35,14 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public int createGame(String gameName) {
+        if (gameName == null) {
+            throw new JsonSyntaxException("");
+        }
         var query = "INSERT INTO GameTable (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
         return DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.setString(1, "");
-                command.setString(2, "");
+                command.setString(1, null);
+                command.setString(2, null);
                 command.setString(3, gameName);
                 command.setString(4, new Gson().toJson(new ChessGame()));
                 command.executeUpdate();
@@ -64,7 +69,7 @@ public class SQLGameDAO implements GameDAO {
                if(result.next()) {
                    return resultToGameData(result);
                }
-               throw new DataAccessException("create game failed");
+               throw new DataAccessException("get game failed");
            } catch (SQLException e) {
                throw new DataAccessException(e.getMessage());
            }

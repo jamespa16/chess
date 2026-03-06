@@ -9,5 +9,5 @@ public interface AuthDAO {
     void deleteAuth(String authToken);
     public void clear();
     boolean verify(String authToken);
-    String getUsername(String authToken);
+String getUsername(String authToken);
 }

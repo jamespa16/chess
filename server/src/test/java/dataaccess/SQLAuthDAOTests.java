@@ -1,6 +1,8 @@
 package dataaccess;
 
 import model.UserData;
+import service.NotAuthorizedError;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,24 +71,24 @@ public class SQLAuthDAOTests {
     @Test
     void getFakeAuthTest() {
         var db = new SQLAuthDAO();
-        assertThrows(DataAccessException.class, () -> db.getAuth(user));
+        assertThrows(NotAuthorizedError.class, () -> db.getAuth(user));
     }
 
     @Test
     void deleteFakeAuthTest() {
         var db = new SQLAuthDAO();
-        assertDoesNotThrow(() -> db.deleteAuth(UUID.randomUUID().toString()));
+        assertThrows(NotAuthorizedError.class, () -> db.deleteAuth(UUID.randomUUID().toString()));
     }
 
     @Test 
     void verifyNoAuthTest() {
         var db = new SQLAuthDAO();
-        assertThrows(DataAccessException.class, () -> db.verify(UUID.randomUUID().toString()));
+        assertThrows(NotAuthorizedError.class, () -> db.verify(UUID.randomUUID().toString()));
     }
 
     @Test
     void getFakeUsernameTest() {
         var db = new SQLAuthDAO();
-        assertThrows(DataAccessException.class, () -> db.getUsername(UUID.randomUUID().toString()));
+        assertThrows(NotAuthorizedError.class, () -> db.getUsername(UUID.randomUUID().toString()));
     }
 }

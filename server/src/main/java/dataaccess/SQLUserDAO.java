@@ -4,7 +4,7 @@ import model.UserData;
 
 import java.sql.SQLException;
 
-public class SQLUserDAO implements UserDAO{
+public class SQLUserDAO implements UserDAO {
     public SQLUserDAO() {
         var query = "CREATE TABLE IF NOT EXISTS UserTable (username VARCHAR(255), password VARCHAR(255), email VARCHAR(255))";
         DatabaseManager.createDatabase();
@@ -21,14 +21,7 @@ public class SQLUserDAO implements UserDAO{
 
     @Override
     public void createUser(UserData user) {
-        var userAlreadyExists = false;
-        try {
-            getUser(user.username());
-            userAlreadyExists = true;
-        } catch (DataAccessException e) {
-
-        }
-        if (userAlreadyExists) {
+        if (getUser(user.username()) != null) {
             throw new DataAccessException("user already exists");
         }
         var query = "INSERT INTO UserTable (username, password, email) VALUES(?,?,?)";
@@ -48,8 +41,10 @@ public class SQLUserDAO implements UserDAO{
     @Override
     public UserData getUser(String username) {
         var query = "SELECT * FROM UserTable WHERE username=?";
-        return DatabaseManager.runSQLCommand(query, (command) -> {
-            try{
+        UserData user = null;
+        try {
+            user = DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
                 command.setString(1, username);
                 var result = command.executeQuery();
                 result.next();
@@ -57,7 +52,11 @@ public class SQLUserDAO implements UserDAO{
             } catch (Exception e) {
                 throw new DataAccessException("getUser failed");
             }
-        });
+            });
+        } catch (DataAccessException e) {
+
+        }
+        return user;
     }
 
     @Override

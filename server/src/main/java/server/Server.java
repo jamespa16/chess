@@ -8,8 +8,6 @@ import io.javalin.*;
 import io.javalin.http.Context;
 import model.*;
 import service.*;
-
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Server {
@@ -74,7 +72,7 @@ public class Server {
 
     public void logoutUser(Context context) { // DELETE /session
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), String.class);
+            var token = ctx.header("authorization");
             userService.logoutUser(token);
             ctx.status(200);
             ctx.result();
@@ -83,7 +81,7 @@ public class Server {
 
     public void listGames(Context context) { // GET /game
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), String.class);
+            var token = ctx.header("authorization");
             var report = new GameReport(gameService.listGames(token));
             ctx.status(200);
             ctx.result(new Gson().toJson(report));
@@ -92,7 +90,7 @@ public class Server {
 
     public void newGame(Context context) { // POST /game
         handler(context, (Context ctx) -> {
-            var token = new Gson().fromJson(ctx.header("authorization"), String.class);
+            var token = ctx.header("authorization");
             var req = new Gson().fromJson(ctx.body(), GameRequest.class);
             var game = gameService.newGame(token, req.gameName());
             ctx.status(200);
@@ -102,8 +100,7 @@ public class Server {
 
     public void joinGame(Context context) { // PUT /game
         handler(context, (Context ctx) -> {
-            var token = UUID.randomUUID().toString();
-            token = new Gson().fromJson(ctx.header("authorization"), String.class);
+            var token = ctx.header("authorization");
             var req = new Gson().fromJson(ctx.body(), JoinRequest.class);
             var user = authService.getUsername(token);
             gameService.joinGame(token, req, user);

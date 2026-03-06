@@ -2,6 +2,7 @@ package dataaccess;
 
 import model.AuthData;
 import model.UserData;
+import service.NotAuthorizedError;
 
 import java.sql.SQLException;
 import java.util.UUID;
@@ -33,7 +34,7 @@ public class SQLAuthDAO implements AuthDAO {
                 command.executeUpdate();
                 return 0;
             } catch (SQLException e) {
-                throw new DataAccessException("table creation failed");
+                throw new DataAccessException("create auth failed");
             }
         });
         return auth;
@@ -50,13 +51,14 @@ public class SQLAuthDAO implements AuthDAO {
                 return new AuthData(result.getString("authToken"),
                         result.getString("username"));
             } catch (SQLException e) {
-                throw new DataAccessException("auth not found");
+                throw new NotAuthorizedError();
             }
         });
     }
 
     @Override
     public void deleteAuth(String authToken) {
+        getUsername(authToken);
         var query = "DELETE FROM AuthTable WHERE authToken=?";
         DatabaseManager.runSQLCommand(query, (command) -> {
            try {
@@ -64,7 +66,7 @@ public class SQLAuthDAO implements AuthDAO {
                command.executeUpdate();
                return 0;
            } catch (SQLException e) {
-               throw new DataAccessException("auth not found");
+               throw new NotAuthorizedError();
            }
         });
     }
@@ -97,7 +99,7 @@ public class SQLAuthDAO implements AuthDAO {
                 result.next();
                 return result.getString("username");
             } catch (SQLException e) {
-                throw new DataAccessException("auth not found");
+                throw new NotAuthorizedError();
             }
         });
     }

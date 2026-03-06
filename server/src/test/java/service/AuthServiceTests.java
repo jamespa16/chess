@@ -19,7 +19,7 @@ public class AuthServiceTests {
     @Test
     void createAuthTest() {
         var authService = setup();
-        assertInstanceOf(UUID.class, authService.createAuth(user));
+        assertInstanceOf(String.class, authService.createAuth(user));
     }
 
     @Test
