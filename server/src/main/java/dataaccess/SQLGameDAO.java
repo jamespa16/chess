@@ -4,17 +4,21 @@ import chess.ChessGame;
 import com.google.gson.Gson;
 import model.GameData;
 
-import javax.xml.crypto.Data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 public class SQLGameDAO implements GameDAO {
     public SQLGameDAO() {
-        var query = "CREATE TABLE IF NOT EXISTS GameTable(gameID INT AUTO_INCREMENT, whiteUsername VARCHAR, blackUsername VARCHAR, gameName VARCHAR, game longtext)";
+        var query = """
+                CREATE TABLE IF NOT EXISTS GameTable (
+                gameID INT AUTO_INCREMENT,
+                whiteUsername VARCHAR(255),
+                blackUsername VARCHAR(255),
+                gameName VARCHAR(255),
+                game longtext,
+                PRIMARY KEY (gameID));""";
         DatabaseManager.createDatabase();
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {

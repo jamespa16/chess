@@ -18,7 +18,7 @@ public class MemoryAuthDAO implements AuthDAO {
     @Override
     public AuthData createAuth(UserData user) {
         try { 
-            AuthData newAuth = new AuthData(UUID.randomUUID(), user.username());
+            AuthData newAuth = new AuthData(UUID.randomUUID().toString(), user.username());
             this.db.add(newAuth);
             return newAuth;
         } catch (Exception e) {
@@ -36,7 +36,7 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void deleteAuth(UUID authToken) {
+    public void deleteAuth(String authToken) {
         var token = db.stream()
             .filter((AuthData auth) -> authToken.equals(auth.authToken()))
             .findFirst()
@@ -51,12 +51,12 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public boolean verify(UUID authToken) {
-        return db.stream().map(AuthData::authToken).anyMatch((UUID token) -> token.equals(authToken));
+    public boolean verify(String authToken) {
+        return db.stream().map(AuthData::authToken).anyMatch((String token) -> token.equals(authToken));
     }
 
     @Override
-    public String getUsername(UUID authToken) {
+    public String getUsername(String authToken) {
         AuthData authData = db.stream()
                 .filter((AuthData auth) -> auth.authToken().equals(authToken))
                 .findFirst()

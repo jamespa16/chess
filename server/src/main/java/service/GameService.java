@@ -7,7 +7,6 @@ import model.JoinRequest;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
@@ -21,7 +20,7 @@ public class GameService {
         this.authService = authService;
     }
 
-    public Collection<GameDataReport> listGames(UUID authToken) {
+    public Collection<GameDataReport> listGames(String authToken) {
         var gameList = secure(authToken, db::listGames);
         Collection<GameDataReport> report = new HashSet<>();
         for (GameData game : gameList) {
@@ -30,11 +29,11 @@ public class GameService {
         return report;
     }
 
-    public int newGame(UUID authToken, String gameName) {
+    public int newGame(String authToken, String gameName) {
         return secure(authToken, () -> {return db.createGame(gameName);});
     }
 
-    public void joinGame(UUID authToken, JoinRequest joinRequest, String user) {
+    public void joinGame(String authToken, JoinRequest joinRequest, String user) {
         if (!authService.verify(authToken)) {
             throw new NotAuthorizedError();
         }
@@ -77,7 +76,7 @@ public class GameService {
         db.clear();
     }
 
-    private <T> T secure(UUID authToken, Supplier<T> secureCall) {
+    private <T> T secure(String authToken, Supplier<T> secureCall) {
         if (authService.verify(authToken)) {
             return secureCall.get();
         } else {

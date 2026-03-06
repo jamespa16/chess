@@ -29,7 +29,7 @@ public class GameServiceTests {
     @Test
     void newGameUnauthorizedTest() {
         var gameService = setup();
-        var authToken = UUID.randomUUID();
+        var authToken = UUID.randomUUID().toString();
         assertThrows(NotAuthorizedError.class, () -> gameService.newGame(authToken, "game"));
     }
 
@@ -56,7 +56,7 @@ public class GameServiceTests {
         gameList.add(gameService.newGame(authToken, "game2"));
         gameList.add(gameService.newGame(authToken, "game3"));
 
-        assertThrows(NotAuthorizedError.class, () -> gameService.listGames(new UUID(0, 0)));
+        assertThrows(NotAuthorizedError.class, () -> gameService.listGames(new UUID(0, 0).toString()));
     }
 
     @Test
@@ -147,7 +147,7 @@ public class GameServiceTests {
         return new GameService(gameDB, authService);
     }
 
-    private UUID getAuthToken() {
+    private String getAuthToken() {
         var db = new MemoryUserDAO();
         var userService = new UserService(db, authService);
         userService.registerUser(user);

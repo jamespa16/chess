@@ -71,19 +71,19 @@ public class AuthServiceTests {
     @Test
     void deleteAuthTestAuthNotFoundTest() {
         var authService = setup();
-        assertThrows(NotAuthorizedError.class, () -> authService.deleteAuth(UUID.randomUUID()));
+        assertThrows(NotAuthorizedError.class, () -> authService.deleteAuth(UUID.randomUUID().toString()));
     }
 
     @Test 
     void verifyFailsTest() {
         var authService = setup();
-        assertFalse(authService.verify(UUID.randomUUID()));
+        assertFalse(authService.verify(UUID.randomUUID().toString()));
     }
 
     @Test
     void getUsernameNotFoundTest() {
         var authService = setup();
-        assertThrows(NotAuthorizedError.class, () -> authService.getUsername(UUID.randomUUID()));
+        assertThrows(NotAuthorizedError.class, () -> authService.getUsername(UUID.randomUUID().toString()));
     }
 
     private AuthService setup() {

@@ -3,8 +3,6 @@ package service;
 import dataaccess.AuthDAO;
 import model.UserData;
 
-import java.util.UUID;
-
 public class AuthService {
     private final AuthDAO db;
 
@@ -12,15 +10,15 @@ public class AuthService {
         this.db = db;
     }
 
-    public UUID createAuth(UserData user){
+    public String createAuth(UserData user){
         return db.createAuth(user).authToken();
     }
 
-    public UUID getAuth(UserData user){
+    public String getAuth(UserData user){
         return db.getAuth(user).authToken();
     }
 
-    public void deleteAuth(UUID authToken){
+    public void deleteAuth(String authToken){
         db.deleteAuth(authToken);
     }
 
@@ -28,11 +26,11 @@ public class AuthService {
         db.clear();
     }
 
-    public boolean verify(UUID authToken) {
+    public boolean verify(String authToken) {
         return db.verify(authToken);
     }
 
-    public String getUsername(UUID authToken) {
+    public String getUsername(String authToken) {
         return db.getUsername(authToken);
     }
 }

@@ -9,7 +9,7 @@ import java.util.UUID;
 public class SQLAuthDAO implements AuthDAO {
 
     public SQLAuthDAO() {
-        var query = "CREATE TABLE IF NOT EXISTS AuthTable(username VARCHAR, authToken VARCHAR)";
+        var query = "CREATE TABLE IF NOT EXISTS AuthTable (username VARCHAR(255), authToken VARCHAR(255));";
         DatabaseManager.createDatabase();
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
@@ -19,16 +19,17 @@ public class SQLAuthDAO implements AuthDAO {
                 throw new DataAccessException("table creation failed");
             }
         });
+        this.clear();
     }
 
     @Override
     public AuthData createAuth(UserData user) {
-        var auth = new AuthData(UUID.randomUUID(), user.username());
+        var auth = new AuthData(UUID.randomUUID().toString(), user.username());
         var query = "INSERT INTO AuthTable (username, authToken) VALUES (?,?)";
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
                 command.setString(1, auth.username());
-                command.setString(2, auth.authToken().toString());
+                command.setString(2, auth.authToken());
                 command.executeUpdate();
                 return 0;
             } catch (SQLException e) {
@@ -45,7 +46,8 @@ public class SQLAuthDAO implements AuthDAO {
             try {
                 command.setString(1, user.username());
                 var result = command.executeQuery();
-                return new AuthData(UUID.fromString(result.getString("authToken")),
+                result.next();
+                return new AuthData(result.getString("authToken"),
                         result.getString("username"));
             } catch (SQLException e) {
                 throw new DataAccessException("auth not found");
@@ -54,12 +56,12 @@ public class SQLAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void deleteAuth(UUID authToken) {
-        var query = "DELETE * FROM AuthTable WHERE username=?";
+    public void deleteAuth(String authToken) {
+        var query = "DELETE FROM AuthTable WHERE authToken=?";
         DatabaseManager.runSQLCommand(query, (command) -> {
            try {
-               command.setString(1, authToken.toString());
-               command.executeQuery();
+               command.setString(1, authToken);
+               command.executeUpdate();
                return 0;
            } catch (SQLException e) {
                throw new DataAccessException("auth not found");
@@ -69,10 +71,10 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public void clear() {
-        var query = "DELETE * FROM AuthTable";
+        var query = "TRUNCATE TABLE AuthTable";
         DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.executeQuery();
+                command.executeUpdate();
                 return 0;
             } catch (SQLException e) {
                 throw new DataAccessException("clear failed");
@@ -81,17 +83,18 @@ public class SQLAuthDAO implements AuthDAO {
     }
 
     @Override
-    public boolean verify(UUID authToken) {
+    public boolean verify(String authToken) {
         return this.getUsername(authToken) != null;
     }
 
     @Override
-    public String getUsername(UUID authToken) {
+    public String getUsername(String authToken) {
         var query = "SELECT * FROM AuthTable WHERE authToken=?";
         return DatabaseManager.runSQLCommand(query, (command) -> {
             try {
-                command.setString(1, authToken.toString());
+                command.setString(1, authToken);
                 var result = command.executeQuery();
+                result.next();
                 return result.getString("username");
             } catch (SQLException e) {
                 throw new DataAccessException("auth not found");

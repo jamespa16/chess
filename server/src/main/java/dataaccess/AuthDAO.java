@@ -3,13 +3,11 @@ package dataaccess;
 import model.AuthData;
 import model.UserData;
 
-import java.util.UUID;
-
 public interface AuthDAO {
     AuthData createAuth(UserData user);
     AuthData getAuth(UserData user);
-    void deleteAuth(UUID authToken);
+    void deleteAuth(String authToken);
     public void clear();
-    boolean verify(UUID authToken);
-    String getUsername(UUID authToken);
+    boolean verify(String authToken);
+    String getUsername(String authToken);
 }

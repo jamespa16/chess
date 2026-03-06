@@ -4,8 +4,6 @@ import dataaccess.UserDAO;
 import model.LoginRequest;
 import model.UserData;
 
-import java.util.UUID;
-
 import com.google.gson.JsonSyntaxException;
 
 public class UserService {
@@ -25,7 +23,7 @@ public class UserService {
         }
     }
 
-    public UUID loginUser(LoginRequest request) {
+    public String loginUser(LoginRequest request) {
         if(request.username() == null || request.password() == null) {
             throw new JsonSyntaxException("");
         }
@@ -37,7 +35,7 @@ public class UserService {
         }
     }
 
-    public void logoutUser(UUID authToken) {
+    public void logoutUser(String authToken) {
         authService.deleteAuth(authToken);
     }
 
