@@ -1,33 +1,122 @@
 package dataaccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
 import model.GameData;
 
+import javax.xml.crypto.Data;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class SQLGameDAO implements GameDAO {
+    public SQLGameDAO() {
+        var query = "CREATE TABLE IF NOT EXISTS GameTable(gameID INT AUTO_INCREMENT, whiteUsername VARCHAR, blackUsername VARCHAR, gameName VARCHAR, game longtext)";
+        DatabaseManager.createDatabase();
+        DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                command.executeUpdate();
+                return 0;
+            } catch (SQLException e) {
+                throw new DataAccessException("table creation failed");
+            }
+        });
+    }
+
     @Override
     public int createGame(String gameName) {
-        return 0;
+        var query = "INSERT INTO GameTable (whiteUsername, blackUsername, gameName, game) VALUES=(NULL, NULL, ?, ?)";
+        return DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                command.setString(1, gameName);
+                command.setString(2, new Gson().toJson(new ChessGame()));
+                command.executeQuery();
+
+                var result = command.getGeneratedKeys();
+                if(result.next()) {
+                    return result.getInt("gameID");
+                }
+
+                throw new DataAccessException("create game failed");
+            } catch (SQLException e) {
+                throw new DataAccessException(e.getMessage());
+            }
+        });
     }
 
     @Override
     public GameData getGame(int gameID) {
-        return null;
+        var query = "SELECT * FROM GameTable WHERE gameID =?";
+        return DatabaseManager.runSQLCommand(query, (command) -> {
+           try {
+               command.setInt(1, gameID);
+               var result = command.executeQuery();
+               if(result.next()) {
+                   return resultToGameData(result);
+               }
+               throw new DataAccessException("create game failed");
+           } catch (SQLException e) {
+               throw new DataAccessException(e.getMessage());
+           }
+        });
     }
 
     @Override
     public Collection<GameData> listGames() {
-        return List.of();
+        var query = "SELECT * FROM GameTable";
+        return DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                var result = command.executeQuery();
+                var list = new HashSet<GameData>();
+                while(result.next()) {
+                    list.add(resultToGameData(result));
+                }
+                return list;
+            } catch (SQLException e) {
+                throw new DataAccessException("list games failed");
+            }
+        });
     }
 
     @Override
     public void updateGame(GameData newGameState) {
+        var query = "UPDATE GameTable SET (whiteUsername, blackUsername, gameName, game) VALUES (?,?,?,?) WHERE gameID=?";
+        DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                command.setString(1, newGameState.whiteUsername());
+                command.setString(2, newGameState.blackUsername());
+                command.setString(3, newGameState.gameName());
+                command.setString(4, new Gson().toJson(newGameState.game()));
 
+                command.executeQuery();
+            } catch (SQLException e) {
+                throw new DataAccessException("update failed");
+            }
+            return 0;
+        });
     }
 
     @Override
     public void clear() {
+        var query = "DROP * FROM GameTable";
+        DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                command.executeQuery();
+            } catch (SQLException e) {
+                throw new DataAccessException("clear failed");
+            }
+            return 0;
+        });
+    }
 
+    private GameData resultToGameData(ResultSet result) throws SQLException {
+        return new GameData(result.getInt("gameID"),
+                result.getString("whiteUsername"),
+                result.getString("blackUsername"),
+                result.getString("gameName"),
+                new Gson().fromJson(result.getString("game"), ChessGame.class));
     }
 }
