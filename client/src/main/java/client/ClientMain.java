@@ -142,12 +142,23 @@ public class ClientMain {
 
     private static void gameScreen(AuthData user, GameData game, Scanner scanner) {
         while(true) {
-            render(game);
+            render(game.game());
             System.out.printf("command ->> ");
             var command = scanner.nextLine();
             if (command == "q" || command == "quit") {
                 return;
             }
+        }
+    }
+
+    private static void render(ChessGame game) {
+        var board = game.getBoard();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                System.out.printf("" + board.getPiece(new ChessPosition(i, j)));
+            }
+            System.out.printf("\n");
+        }
     }
 }
 
