@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import chess.*;
 import model.AuthData;
+import model.GameData;
 
 public class ClientMain {
     public static void main(String[] args) {
@@ -29,7 +30,7 @@ public class ClientMain {
                 case "login":
                     var user = login(scanner);
                     if (user != null) {
-                        userScreen(user);
+                        userScreen(user, scanner);
                     }
                     break;
                 case "register":
@@ -39,7 +40,7 @@ public class ClientMain {
         }
     }
 
-    private AuthData login (Scanner scanner) {
+    private static AuthData login (Scanner scanner) {
         var attempting = true;
         while (attempting) {
             System.out.printf("username ->> ");
@@ -64,7 +65,7 @@ public class ClientMain {
         }
     }
 
-    private AuthData register (Scanner scanner) {
+    private static AuthData register (Scanner scanner) {
         var attempting = true;
         while (attempting) {
             System.out.printf("username ->> ");
@@ -88,6 +89,55 @@ public class ClientMain {
             }
         }
     }
+
+    private static void userScreen(AuthData user, Scanner scanner) {
+        System.out.println("hello " + user.username() + "!");
+        var session = true;
+        while(session) {
+            System.out.printf("WHAT DO YOU WISH ->> ");
+            String input = scanner.nextLine();
+            switch (input) {
+                case "h":
+                case "help":
+                    System.out.println("You can get this help with 'help'\n" +
+                    "- logout with 'logout'" +
+                    "- create a new game with 'create'"+
+                    "- list games on the server with 'list'"+
+                    "- join a game with 'play' and the number from the list"+
+                    "- observe a game with 'watch' and the number from the list\n magical.");
+                    break;
+                case "logout":
+                    session = false;
+                    server.logout(user);
+                    break;
+                case "create":
+                    System.out.printf("what do you want to call this game? ->>");
+                    var name = scanner.nextLine();
+                    server.createGame(name);
+                    break;
+                case "list":
+                    var games = server.listGames();
+                    for (GameData game : games) {
+                        System.out.println("#" + game.gameID() +
+                        ": " + game.gameName() +
+                        " with white as: " + game.whiteUsername() +
+                        " and black as: " + game.blackUsername());
+                    }
+                    break;
+                case "play":
+                    System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
+                    var id = scanner.nextLine();
+                    var game = server.joinGame(user, id);
+                    gameScreen(user, game);
+                    break;
+                case "watch":
+                    System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
+                    var id = scanner.nextLine();
+                    var game = server.joinGame(user, id);
+                    gameScreen(user, game);
+                    break;
+        }
+    }
 }
 
 /*
@@ -100,17 +150,17 @@ public class ClientMain {
     - register ✅
         calls REGISTER, then if successsful, enters USER SCREEN
     USER SCREEN:
-    - help 
+    - help ✅
         provides a list of all commands
-    - logout
+    - logout ✅
         calls LOGOUT, then returns to start screen
-    - create game
+    - create game ✅
         takes a new name, then calls CREATE. (does not join)
-    - list games
+    - list games ✅
         calls LIST, then gives a list of games. DOES NOT use id numbers.
         [#, name, players]
-    - play
+    - play ✅
         takes game number from list & color, then JOIN and enters CHESSBOARD screen, uses internal numbering instead of server numbers.
-    - observe
+    - observe ✅
         takes game number from list & enters CHESSBOARD view 
 */
