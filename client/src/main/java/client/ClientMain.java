@@ -5,8 +5,10 @@ import java.util.Scanner;
 import chess.*;
 import model.AuthData;
 import model.GameData;
+import client.ServerFacade;
 
 public class ClientMain {
+    static ServerFacade server = new ServerFacade();
     public static void main(String[] args) {
         System.out.println("WELCOME TO CHESS");
         var running = true;
@@ -63,6 +65,7 @@ public class ClientMain {
                 }
             }
         }
+        return null;
     }
 
     private static AuthData register (Scanner scanner) {
@@ -88,6 +91,7 @@ public class ClientMain {
                 }
             }
         }
+        return null;
     }
 
     private static void userScreen(AuthData user, Scanner scanner) {
@@ -126,15 +130,15 @@ public class ClientMain {
                     break;
                 case "play":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
-                    var id = scanner.nextLine();
-                    var game = server.joinGame(user, id);
-                    gameScreen(user, game);
+                    var gameId = scanner.nextLine();
+                    var game = server.joinGame(user, gameId);
+                    gameScreen(user, game, scanner);
                     break;
                 case "watch":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
-                    var id = scanner.nextLine();
-                    var game = server.joinGame(user, id);
-                    gameScreen(user, game, scanner);
+                    var watchId = scanner.nextLine();
+                    var watchGame = server.joinGame(user, watchId);
+                    gameScreen(user, watchGame, scanner);
                     break;
                 }
         }
