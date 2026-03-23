@@ -134,9 +134,20 @@ public class ClientMain {
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
                     var id = scanner.nextLine();
                     var game = server.joinGame(user, id);
-                    gameScreen(user, game);
+                    gameScreen(user, game, scanner);
                     break;
+                }
         }
+    }
+
+    private static void gameScreen(AuthData user, GameData game, Scanner scanner) {
+        while(true) {
+            render(game);
+            System.out.printf("command ->> ");
+            var command = scanner.nextLine();
+            if (command == "q" || command == "quit") {
+                return;
+            }
     }
 }
 
