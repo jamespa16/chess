@@ -8,7 +8,7 @@ import model.GameData;
 import client.ServerFacade;
 
 public class ClientMain {
-    static ServerFacade server = new ServerFacade();
+    static ServerFacade server = new ServerFacade("http://127.0.0.1:8080");
     public static void main(String[] args) {
         System.out.println("WELCOME TO CHESS");
         var running = true;
