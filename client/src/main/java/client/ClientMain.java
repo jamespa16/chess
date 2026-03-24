@@ -112,15 +112,15 @@ public class ClientMain {
                     break;
                 case "logout":
                     session = false;
-                    server.logout(user);
+                    server.logout(user.authToken());
                     break;
                 case "create":
                     System.out.printf("what do you want to call this game? ->>");
                     var name = scanner.nextLine();
-                    server.createGame(name);
+                    server.createGame(name, user.authToken());
                     break;
                 case "list":
-                    var games = server.listGames();
+                    var games = server.listGames(user.authToken());
                     for (GameData game : games) {
                         System.out.println("#" + game.gameID() +
                         ": " + game.gameName() +
@@ -131,13 +131,13 @@ public class ClientMain {
                 case "play":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
                     var gameId = scanner.nextLine();
-                    var game = server.joinGame(user, gameId);
+                    var game = server.joinGame(user.authToken(), gameId);
                     gameScreen(user, game, scanner);
                     break;
                 case "watch":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
                     var watchId = scanner.nextLine();
-                    var watchGame = server.joinGame(user, watchId);
+                    var watchGame = server.joinGame(user.authToken(), watchId);
                     gameScreen(user, watchGame, scanner);
                     break;
                 }

@@ -17,22 +17,23 @@ public class ServerFacade {
     }
 
     public AuthData register(String user, String password) {
-        return null;
+        var auth = HttpHandler.post("/user", user, password, AuthData.class);
+        return auth;
     }
 
-    public void logout(AuthData user) {
-        
+    public void logout(String authToken) {
+        HttpHandler.delete("/session", authToken, null);
     }
 
-    public void createGame(String name){
-
+    public void createGame(String name, String authToken){
+        HttpHandler.post("/game", authToken, name, null);
     }
 
-    public Collection<GameData> listGames() {
-        return null;
+    public Collection<GameData> listGames(String authToken) {
+        return HttpHandler.get("/game", authToken, null, null);
     }
 
-    public GameData joinGame(AuthData user, String id) {
-        return null;
+    public GameData joinGame(String authToken, String id) {
+        return HttpHandler.put("/game", authToken, id, null);
     }
 }
