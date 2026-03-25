@@ -2,6 +2,8 @@ package client;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.*;
 import server.Server;
 
@@ -93,25 +95,64 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void watchGameTest() {
+    public void deleteDBTest() {
         var facade = new ServerFacade(url);
-        assertDoesNotThrow(() ->  {
+        assertDoesNotThrow(() -> facade.deleteDB());
+    }
+
+    @Test
+    public void registerDoubleTest() {
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
+            facade.deleteDB();
+            facade.register(username, email, password);
+            facade.register(username, email, password);
+        });
+    }
+
+    @Test
+    public void loginNotRegisteredTest() {
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
+            facade.deleteDB();
+            facade.login(username, password);
+        });
+    }
+
+    @Test
+    public void logoutNotInSessionTest(){
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
+            facade.deleteDB();
+            facade.logout("beans");
+        });
+    }
+
+    @Test
+    public void createGameNoAuthTest(){
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
+            facade.deleteDB();
+            facade.createGame("game", "beans");
+        });
+    }
+
+    @Test
+    public void listGamesNoAuthTest() {
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
+            facade.deleteDB();
+            facade.listGames("beans");
+        });
+    }
+
+    @Test
+    public void joinGameDoesNotExist() {
+        var facade = new ServerFacade(url);
+        assertThrows(Exception.class, () -> {
             facade.deleteDB();
             var session = facade.register(username, email, password);
-            var id = facade.createGame("test1", session.authToken());
-            facade.watchGame(session.authToken(), id);
+            facade.joinGame(session.authToken(), 0, "WHITE");
         });
     }
 }
-
-/* 
-    NEGATIVE TESTS
-    TODO: 
-    login
-    register
-    logout
-    create
-    list
-    join
-    watch
-*/

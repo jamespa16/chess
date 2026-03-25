@@ -109,10 +109,6 @@ public class ServerFacade {
         });
     }
 
-    public void watchGame(String authToken, int id) throws Exception {
-        // magic sparkles
-    }
-
     public void deleteDB() throws Exception {
         httpRequestHelper("/db", (req) -> req.DELETE());
     }

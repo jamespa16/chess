@@ -44,9 +44,6 @@ public class ClientMain {
                         userScreen(user, scanner);
                     }
                     break;
-                case "burn":
-                    serverRequestHandler(() -> {server.deleteDB(); return null;});
-                    gameList.clear();
             }
         }
     }
@@ -99,6 +96,7 @@ public class ClientMain {
                     case "n":
                     case "no":
                         attempting = false;
+                        break;
                 }
             }
         }
@@ -151,7 +149,13 @@ public class ClientMain {
                             color = scanner.nextLine().trim().toUpperCase();
                         }
                         var selectedColor = color;
-                        serverRequestHandler(() -> {server.joinGame(user.authToken(), gameList.get(gameId).gameID(), selectedColor); return null;});
+                        var selectedGame = gameList.get(gameId);
+                        if (color.equals("WHITE") && selectedGame.whiteUsername().equals(user.username()) ||
+                            color.equals("BLACK") && selectedGame.blackUsername().equals(user.username())) {
+                            System.out.println("you've already joined that game!");
+                        } else {
+                            serverRequestHandler(() -> {server.joinGame(user.authToken(), gameList.get(gameId).gameID(), selectedColor); return null;});
+                        }
                         gameScreen(user, gameList.get(gameId), scanner, selectedColor);
                     } catch (NumberFormatException e) {
                         System.out.println("that isn't a game id!");
@@ -166,7 +170,6 @@ public class ClientMain {
                         if (watchId > gameList.size() -1 || watchId < 0) {
                             throw new NumberFormatException();
                         }
-                        serverRequestHandler(()->{server.watchGame(user.authToken(), watchId); return null;});
                         gameScreen(user, gameList.get(watchId), scanner, "observer");
                     } catch (NumberFormatException e) {
                         System.out.println("that isn't a game id!");
@@ -224,11 +227,4 @@ public class ClientMain {
             return null;
         }
     }
-
-
 }
-
-/*
-    TODO:
-    - negative test cases
-*/
