@@ -5,10 +5,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
-import org.junit.jupiter.api.function.ThrowingConsumer;
-import org.junit.jupiter.api.function.ThrowingSupplier;
-
-import chess.*;
+import chess.ChessGame.TeamColor;
 import model.AuthData;
 import model.GameData;
 
@@ -65,7 +62,7 @@ public class ClientMain {
             if (auth != null) {
                 return auth;
             } else {
-                System.out.printf("authorization failed, try again? [y/n] >>");
+                System.out.printf("try again? [y/n] >>");
                 String tryAgain = scanner.nextLine();
                 switch (tryAgain) {
                     case "y":
@@ -83,17 +80,17 @@ public class ClientMain {
     private static AuthData register (Scanner scanner) {
         var attempting = true;
         while (attempting) {
-            System.out.printf("username ->> ");
+            System.out.printf("username: >> ");
             var user = scanner.nextLine();
-            System.out.printf("password ->> ");
+            System.out.printf("password: >> ");
             var password = scanner.nextLine();
-            System.out.printf("email ->> ");
+            System.out.printf("email: >> ");
             var email = scanner.nextLine();
             var auth = serverRequestHandler(() -> server.register(user, email, password));
             if (auth != null) {
                 return auth;
             } else {
-                System.out.printf("registration failed, try again? [y/n] ->>");
+                System.out.printf("registration failed, try again? [y/n] >>");
                 String tryAgain = scanner.nextLine();
                 switch (tryAgain) {
                     case "y":
@@ -112,7 +109,7 @@ public class ClientMain {
         System.out.println("hello " + user.username() + "!");
         var session = true;
         while(session) {
-            System.out.printf("[" + user.username() + "] command >> ");
+            System.out.printf("[" + user.username() + "] game command >> ");
             String input = scanner.nextLine();
             switch (input) {
                 case "h":
@@ -127,6 +124,7 @@ public class ClientMain {
                 case "logout":
                     session = false;
                     serverRequestHandler(() -> {server.logout(user.authToken()); return null;});
+                    System.out.println("logged out!");
                     break;
                 case "create":
                     System.out.printf("what do you want to call this game? >>");
@@ -137,22 +135,36 @@ public class ClientMain {
                     getServerGames(user);
                     break;
                 case "play":
-                    System.out.println("which game?");
+                    System.out.println("select a game by id:");
                     getServerGames(user);
                     System.out.printf(">> ");
-                    var gameId = Integer.parseInt(scanner.nextLine()) - 1;
-                    System.out.printf("as which player? >> ");
-                    var color = scanner.nextLine();
-                    serverRequestHandler(() -> {server.joinGame(user.authToken(), gameList.get(gameId).gameID(), color); return null;});
-                    gameScreen(user, gameList.get(gameId), scanner);
+                    try {
+                        var gameId = Integer.parseInt(scanner.nextLine()) - 1;
+                        System.out.printf("as which player? >> ");
+                        var color = scanner.nextLine().toUpperCase();
+                        while (!color.equals("WHITE") && !color.equals("BLACK")) {
+                            System.out.println("try either 'WHITE' or 'BLACK'");
+                            System.out.printf(">> ");
+                            color = scanner.nextLine().toUpperCase();
+                        }
+                        var selectedColor = color;
+                        serverRequestHandler(() -> {server.joinGame(user.authToken(), gameList.get(gameId).gameID(), selectedColor); return null;});
+                        gameScreen(user, gameList.get(gameId), scanner, selectedColor);
+                    } catch (NumberFormatException e) {
+                        System.out.println("that isn't a game id!");
+                    }
                     break;
                 case "watch":
-                    System.out.println("which game?");
+                    System.out.println("select a game by id:");
                     getServerGames(user);
                     System.out.printf(">> ");
-                    var watchId = Integer.parseInt(scanner.nextLine()) - 1;
-                    serverRequestHandler(()->{server.watchGame(user.authToken(), watchId); return null;});
-                    gameScreen(user, gameList.get(watchId), scanner);
+                    try {
+                        var watchId = Integer.parseInt(scanner.nextLine()) - 1;
+                        serverRequestHandler(()->{server.watchGame(user.authToken(), watchId); return null;});
+                        gameScreen(user, gameList.get(watchId), scanner, "observer");
+                    } catch (NumberFormatException e) {
+                        System.out.println("that isn't a game id!");
+                    }
                     break;
                 }
         }
@@ -170,13 +182,19 @@ public class ClientMain {
         }
     }
 
-    private static void gameScreen(AuthData user, GameData game, Scanner scanner) {
-        while(true) {
-            Renderer.render(game.game());
-            System.out.printf("command >> ");
+    private static void gameScreen(AuthData user, GameData game, Scanner scanner, String color) {
+        var session = true;
+        var perspective = TeamColor.WHITE;
+        if (color.equals("BLACK")) {
+            perspective = TeamColor.BLACK;
+        }
+        while(session) {
+            System.out.print("\u001b[H\u001b[2J");
+            Renderer.render(game.game(), perspective);
+            System.out.printf("[" + game.gameName() + "]" + " control >> ");
             var command = scanner.nextLine();
-            if (command == "q" || command == "quit") {
-                return;
+            if (command.equals("q") || command.equals("quit")) {
+                session = false;
             }
         }
     }
@@ -185,7 +203,18 @@ public class ClientMain {
         try {
             return request.call();
         } catch (Throwable e) {
-            System.out.println("something terrible has happened..." + e.getMessage());
+            var err = e.getMessage();
+            if (err.contains("400")) {
+                System.out.println("client failure ...");
+            } else if (err.contains("401")) {
+                System.out.println("authorization failed!");
+            } else if (err.contains("403")) {
+                System.out.println("someone else already took that!");
+            } else if (err.contains("500")) {
+                System.out.println("server failure!"); 
+            } else {
+                System.out.println("something went terribly wrong!"); 
+            }
             return null;
         }
     }
@@ -195,7 +224,5 @@ public class ClientMain {
 
 /*
     TODO:
-    - pretty renderer
-    - error handling & real state
     - negative test cases
 */
