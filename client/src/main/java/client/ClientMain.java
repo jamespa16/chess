@@ -18,7 +18,7 @@ public class ClientMain {
         while (running) {
             System.out.printf("command >> ");
             Scanner scanner = new Scanner(System.in);
-            String input = scanner.nextLine();
+            String input = scanner.nextLine().trim();
             switch (input) {
                 case "h":
                 case "help":
@@ -55,15 +55,15 @@ public class ClientMain {
         var attempting = true;
         while (attempting) {
             System.out.printf("username >> ");
-            var user = scanner.nextLine();
+            var user = scanner.nextLine().trim();
             System.out.printf("password >> ");
-            var password = scanner.nextLine();
+            var password = scanner.nextLine().trim();
             var auth = serverRequestHandler(() -> server.login(user, password));
             if (auth != null) {
                 return auth;
             } else {
                 System.out.printf("try again? [y/n] >>");
-                String tryAgain = scanner.nextLine();
+                String tryAgain = scanner.nextLine().trim();
                 switch (tryAgain) {
                     case "y":
                     case "yes":
@@ -81,17 +81,17 @@ public class ClientMain {
         var attempting = true;
         while (attempting) {
             System.out.printf("username: >> ");
-            var user = scanner.nextLine();
+            var user = scanner.nextLine().trim();
             System.out.printf("password: >> ");
-            var password = scanner.nextLine();
+            var password = scanner.nextLine().trim();
             System.out.printf("email: >> ");
-            var email = scanner.nextLine();
+            var email = scanner.nextLine().trim();
             var auth = serverRequestHandler(() -> server.register(user, email, password));
             if (auth != null) {
                 return auth;
             } else {
                 System.out.printf("registration failed, try again? [y/n] >>");
-                String tryAgain = scanner.nextLine();
+                String tryAgain = scanner.nextLine().trim();
                 switch (tryAgain) {
                     case "y":
                     case "yes":
@@ -110,7 +110,7 @@ public class ClientMain {
         var session = true;
         while(session) {
             System.out.printf("[" + user.username() + "] game command >> ");
-            String input = scanner.nextLine();
+            String input = scanner.nextLine().trim();
             switch (input) {
                 case "h":
                 case "help":
@@ -128,7 +128,7 @@ public class ClientMain {
                     break;
                 case "create":
                     System.out.printf("what do you want to call this game? >>");
-                    var name = scanner.nextLine();
+                    var name = scanner.nextLine().trim();
                     serverRequestHandler(() -> server.createGame(name, user.authToken()));
                     break;
                 case "list":
@@ -139,13 +139,16 @@ public class ClientMain {
                     getServerGames(user);
                     System.out.printf(">> ");
                     try {
-                        var gameId = Integer.parseInt(scanner.nextLine()) - 1;
+                        var gameId = Integer.parseInt(scanner.nextLine().trim()) - 1;
+                        if ((gameId > gameList.size() - 1) || (gameId < 0)) {
+                            throw new NumberFormatException();
+                        }
                         System.out.printf("as which player? >> ");
-                        var color = scanner.nextLine().toUpperCase();
+                        var color = scanner.nextLine().trim().toUpperCase();
                         while (!color.equals("WHITE") && !color.equals("BLACK")) {
                             System.out.println("try either 'WHITE' or 'BLACK'");
                             System.out.printf(">> ");
-                            color = scanner.nextLine().toUpperCase();
+                            color = scanner.nextLine().trim().toUpperCase();
                         }
                         var selectedColor = color;
                         serverRequestHandler(() -> {server.joinGame(user.authToken(), gameList.get(gameId).gameID(), selectedColor); return null;});
@@ -159,7 +162,10 @@ public class ClientMain {
                     getServerGames(user);
                     System.out.printf(">> ");
                     try {
-                        var watchId = Integer.parseInt(scanner.nextLine()) - 1;
+                        var watchId = Integer.parseInt(scanner.nextLine().trim()) - 1;
+                        if (watchId > gameList.size() -1 || watchId < 0) {
+                            throw new NumberFormatException();
+                        }
                         serverRequestHandler(()->{server.watchGame(user.authToken(), watchId); return null;});
                         gameScreen(user, gameList.get(watchId), scanner, "observer");
                     } catch (NumberFormatException e) {
@@ -192,7 +198,7 @@ public class ClientMain {
             System.out.print("\u001b[H\u001b[2J");
             Renderer.render(game.game(), perspective);
             System.out.printf("[" + game.gameName() + "]" + " control >> ");
-            var command = scanner.nextLine();
+            var command = scanner.nextLine().trim();
             if (command.equals("q") || command.equals("quit")) {
                 session = false;
             }
