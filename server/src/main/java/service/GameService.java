@@ -2,11 +2,9 @@ package service;
 
 import dataaccess.GameDAO;
 import model.GameData;
-import model.GameDataReport;
 import model.JoinRequest;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.function.Supplier;
 
 import com.google.gson.JsonSyntaxException;
@@ -20,13 +18,8 @@ public class GameService {
         this.authService = authService;
     }
 
-    public Collection<GameDataReport> listGames(String authToken) {
-        var gameList = secure(authToken, db::listGames);
-        Collection<GameDataReport> report = new HashSet<>();
-        for (GameData game : gameList) {
-            report.add(new GameDataReport(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName()));
-        }
-        return report;
+    public Collection<GameData> listGames(String authToken) {
+        return secure(authToken, db::listGames);
     }
 
     public int newGame(String authToken, String gameName) {

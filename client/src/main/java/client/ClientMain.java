@@ -1,14 +1,16 @@
 package client;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import chess.*;
 import model.AuthData;
 import model.GameData;
-import client.ServerFacade;
 
 public class ClientMain {
-    static ServerFacade server = new ServerFacade("http://127.0.0.1:8080");
+    private final static ServerFacade server = new ServerFacade("http://127.0.0.1:8080");
+    private final static List<GameData> gameList = new ArrayList<>();
     public static void main(String[] args) {
         System.out.println("WELCOME TO CHESS");
         var running = true;
@@ -49,6 +51,7 @@ public class ClientMain {
             var user = scanner.nextLine();
             System.out.printf("password ->> ");
             var password = scanner.nextLine();
+            try {
             var auth = server.login(user, password);
             if (auth != null) {
                 return auth;
@@ -64,6 +67,7 @@ public class ClientMain {
                         attempting = false;
                 }
             }
+        } catch (Exception e) {}
         }
         return null;
     }
@@ -75,7 +79,10 @@ public class ClientMain {
             var user = scanner.nextLine();
             System.out.printf("password ->> ");
             var password = scanner.nextLine();
-            var auth = server.register(user, password);
+            System.out.printf("email ->> ");
+            var email = scanner.nextLine();
+            try {
+            var auth = server.register(user, email, password);
             if (auth != null) {
                 return auth;
             } else {
@@ -90,6 +97,9 @@ public class ClientMain {
                         attempting = false;
                 }
             }
+        } catch (Exception e) {
+
+        }
         }
         return null;
     }
@@ -100,6 +110,7 @@ public class ClientMain {
         while(session) {
             System.out.printf("WHAT DO YOU WISH ->> ");
             String input = scanner.nextLine();
+            try {
             switch (input) {
                 case "h":
                 case "help":
@@ -121,7 +132,7 @@ public class ClientMain {
                     break;
                 case "list":
                     var games = server.listGames(user.authToken());
-                    for (GameData game : games) {
+                    for (GameData game : games.games()) {
                         System.out.println("#" + game.gameID() +
                         ": " + game.gameName() +
                         " with white as: " + game.whiteUsername() +
@@ -130,17 +141,22 @@ public class ClientMain {
                     break;
                 case "play":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
-                    var gameId = scanner.nextLine();
-                    var game = server.joinGame(user.authToken(), gameId);
-                    gameScreen(user, game, scanner);
+                    var gameId = Integer.parseInt(scanner.nextLine());
+                    System.out.printf("as which player? ->>");
+                    var color = scanner.nextLine();
+                    server.joinGame(user.authToken(), gameId, color);
+                    gameScreen(user, gameList.get(gameId), scanner);
                     break;
                 case "watch":
                     System.out.printf("which game? hint: you can get the game ID with 'list' ->>");
-                    var watchId = scanner.nextLine();
-                    var watchGame = server.joinGame(user.authToken(), watchId);
-                    gameScreen(user, watchGame, scanner);
+                    var watchId = Integer.parseInt(scanner.nextLine());
+                    server.watchGame(user.authToken(), watchId);
+                    gameScreen(user, gameList.get(watchId), scanner);
                     break;
                 }
+            } catch (Exception e) {
+
+            }
         }
     }
 
