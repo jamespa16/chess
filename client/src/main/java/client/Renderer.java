@@ -61,83 +61,89 @@ public class Renderer {
                     }
                 } else {
                     lineColor = color;
-                var pieceCode = 0;
-                var pieceColor = "\u001b[29m";
-                if (i == 2 && j == 1 && piece != null) {
-                    switch(piece.getPieceType()) {
-                        case PAWN:
-                            pieceCode = 1;
-                            break;
-                        case ROOK:
-                            pieceCode = 2;
-                            break;
-                        case BISHOP:
-                            pieceCode = 3;
-                            break;
-                        case KNIGHT:
-                            pieceCode = 4;
-                            break;
-                        case QUEEN:
-                            pieceCode = 5;
-                            break;
-                        case KING:
-                            pieceCode = 6;
-                            break;
-                    }
-                    if (piece.getTeamColor() == TeamColor.BLACK) {
-                        pieceCode += 6;
-                        pieceColor = "\u001b[30m";
-                    }
+                    line += renderPiece(i, j, piece);
                 }
-                
-                line += pieceColor;
-                switch (pieceCode) {
-                    case 0:
-                        line += " ";
-                        break;
-                    case 1:
-                        line += "♙";
-                        break;
-                    case 2:
-                        line += "♖";
-                        break;
-                    case 3:
-                        line += "♗";
-                        break;
-                    case 4:
-                        line += "♘";
-                        break;
-                    case 5:
-                        line += "♕";
-                        break;
-                    case 6:
-                        line += "♔";
-                        break;
-                    case 7:
-                        line += "♟";
-                        break;
-                    case 8:
-                        line += "♜";
-                        break;
-                    case 9:
-                        line += "♝";
-                        break;
-                    case 10:
-                        line += "♞";
-                        break;
-                    case 11:
-                        line += "♛";
-                        break;
-                    case 12:
-                        line += "♚";
-                        break;
-                }
-                line += "\u001b[39m";
-                
-            }
             }
         System.out.printf(lineColor);
         System.out.printf(line);
         System.out.printf(clear);
     }
+
+
+    private static String renderPiece(int i, int j, ChessPiece piece) {
+        var cell = "";
+        var pieceCode = 0;
+        var pieceColor = "\u001b[29m";
+        if (i == 2 && j == 1 && piece != null) {
+            switch(piece.getPieceType()) {
+                case PAWN:
+                    pieceCode = 1;
+                    break;
+                case ROOK:
+                    pieceCode = 2;
+                    break;
+                case BISHOP:
+                    pieceCode = 3;
+                    break;
+                case KNIGHT:
+                    pieceCode = 4;
+                    break;
+                case QUEEN:
+                    pieceCode = 5;
+                    break;
+                case KING:
+                    pieceCode = 6;
+                    break;
+            }
+            if (piece.getTeamColor() == TeamColor.BLACK) {
+                pieceCode += 6;
+                pieceColor = "\u001b[30m";
+            }
+        }
+        cell += pieceColor;
+        switch (pieceCode) {
+            case 0:
+                cell += " ";
+                break;
+            case 1:
+                cell += "♙";
+                break;
+            case 2:
+                cell += "♖";
+                break;
+            case 3:
+                cell += "♗";
+                break;
+            case 4:
+                cell += "♘";
+                break;
+            case 5:
+                cell += "♕";
+                break;
+            case 6:
+                cell += "♔";
+                break;
+            case 7:
+                cell += "♟";
+                break;
+            case 8:
+                cell += "♜";
+                break;
+            case 9:
+                cell += "♝";
+                break;
+            case 10:
+                cell += "♞";
+                break;
+            case 11:
+                cell += "♛";
+                break;
+            case 12:
+                cell += "♚";
+                break;
+        }
+        cell += "\u001b[39m";
+        return cell;
+    }
+    
 }
