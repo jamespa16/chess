@@ -14,22 +14,18 @@ public class ServerFacadeTests {
     private static String username = "bob";
     private static String password = "1234";
     private static String email = "bob@boing.blob";
-    private static String url = "http://localhost:8080";
+    private static String url = "http://localhost";
 
     @BeforeAll
     public static void init() {
         server = new Server();
         var port = server.run(8080);
         System.out.println("Started test HTTP server on " + port);
+        url += ":" + port;
     }
 
     @AfterAll
     static void stopServer() {
-        var facade = new ServerFacade(url);
-        try {
-            facade.deleteDB();
-        } catch (Exception e) {
-        }
         server.stop();
     }
 
