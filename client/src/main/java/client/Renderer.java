@@ -16,24 +16,20 @@ public class Renderer {
             }
 
             var board = game.getBoard();
-            for (int y = 0; y < 10; y++) {
-                if (y == 0) {
-                    System.out.println("╭── " + colorFrame + " ──╮");
-                } else if (y == 9) {
-                    System.out.println("╰── " + colorFrame + " ──╯");
-                } else {
-                    for (int j = 0; j < 3; j++) {
-                        for (int x = 0; x < 10; x++) {
-                            if (perspective == TeamColor.WHITE) {
-                                renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)));
-                            } else {
-                                renderLine(x, y, j, board.getPiece(new ChessPosition(y, x)));
-                            }
-                            
+            System.out.println("╭── " + colorFrame + " ──╮");
+            for (int y = 1; y < 9; y++) {
+                for (int j = 0; j < 3; j++) {
+                    for (int x = 0; x < 10; x++) {
+                        if (perspective == TeamColor.WHITE) {
+                            renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)));
+                        } else {
+                            renderLine(x, y, j, board.getPiece(new ChessPosition(y, x)));
                         }
+                        
                     }
                 }
             }
+            System.out.println("╰── " + colorFrame + " ──╯");
         }
 
 

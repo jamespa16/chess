@@ -21,7 +21,7 @@ import model.UserData;
 
 public class ServerFacade {
     private String url;
-    private static final HttpClient Client = HttpClient.newHttpClient();
+    private final HttpClient client = HttpClient.newHttpClient();
 
     public ServerFacade(String url){
         this.url = url;
@@ -34,7 +34,7 @@ public class ServerFacade {
             .uri(new URI(url + endpoint))
             .timeout(java.time.Duration.ofMillis(5000))
             .POST(BodyPublishers.ofString(body)).build();
-        var response = Client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
             return new Gson().fromJson(response.body(), AuthData.class);
@@ -50,7 +50,7 @@ public class ServerFacade {
             .uri(new URI(url + endpoint))
             .timeout(java.time.Duration.ofMillis(5000))
             .POST(BodyPublishers.ofString(body)).build();
-        var response = Client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
             return new Gson().fromJson(response.body(), AuthData.class);
@@ -67,7 +67,7 @@ public class ServerFacade {
             .DELETE()
             .header("authorization", authToken)
             .build();
-        var response = Client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new Exception("" + response.statusCode() + ": " + response.body());
@@ -83,7 +83,7 @@ public class ServerFacade {
             .POST(BodyPublishers.ofString(body))
             .header("authorization", authToken)
             .build();
-        var response = Client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
             Map<String, Integer> result = new Gson().fromJson(response.body(), new TypeToken<Map<String, Integer>>() {}.getType());
@@ -119,7 +119,7 @@ public class ServerFacade {
                 .timeout(java.time.Duration.ofMillis(5000)))
                .build();
 
-        var response = Client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new Exception("" + response.statusCode() + ": " + response.body());
