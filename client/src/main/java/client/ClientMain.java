@@ -30,7 +30,7 @@ public class ClientMain {
                     System.out.println("You can get this help with 'help'\n" +
                     "- quit with 'quit'\n" +
                     "- login with 'login'\n"+
-                    "- register with 'register'.\n magical.");
+                    "- register with 'register'.");
                     break;
                 case "q":
                 case "quit":
@@ -104,7 +104,7 @@ public class ClientMain {
                     "- create a new game with 'create'\n"+
                     "- list games on the server with 'list'\n"+
                     "- join a game with 'play' and the number from the list\n"+
-                    "- observe a game with 'watch' and the number from the list\n magical.");
+                    "- observe a game with 'watch' and the number from the list\n");
                     break;
                 case "logout":
                     session = false;
@@ -233,9 +233,11 @@ public class ClientMain {
 
     private static void updateGameList(AuthData user) {
         var serverGames = serverRequestHandler(() -> SERVER_CONNECTION.listGames(user.authToken()));
-        for (GameData game : serverGames.games()) {
-            if (!GAME_LIST.contains(game)) {
-                GAME_LIST.add(game);
+        if (serverGames != null) {
+            for (GameData game : serverGames.games()) {
+                if (!GAME_LIST.contains(game)) {
+                    GAME_LIST.add(game);
+                }
             }
         }
     }

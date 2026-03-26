@@ -25,6 +25,11 @@ public class ServerFacadeTests {
 
     @AfterAll
     static void stopServer() {
+        var facade = new ServerFacade(url);
+        try {
+            facade.deleteDB();
+        } catch (Exception e) {
+        }
         server.stop();
     }
 
