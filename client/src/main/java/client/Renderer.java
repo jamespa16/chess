@@ -21,9 +21,9 @@ public class Renderer {
                 for (int j = 0; j < 3; j++) {
                     for (int x = 0; x < 10; x++) {
                         if (perspective == TeamColor.WHITE) {
-                            renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)));
+                            renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)), perspective);
                         } else {
-                            renderLine(x, y, j, board.getPiece(new ChessPosition(y, x)));
+                            renderLine(x, y, j, board.getPiece(new ChessPosition(y, (9-x))), perspective);
                         }
                         
                     }
@@ -33,11 +33,17 @@ public class Renderer {
         }
 
 
-    private static void renderLine(int x, int y, int j, ChessPiece piece) {
+    private static void renderLine(int x, int y, int j, ChessPiece piece, TeamColor perspective) {
         var line = "";
         var clear = "\u001b[49m";
         var color = "\u001b[47m"; // white
-        if ((x+y) % 2 == 1) {
+
+        var squareDirection = 0;
+        if (perspective == TeamColor.BLACK) {
+            squareDirection = 1;
+        }
+
+        if ((x+y) % 2 == squareDirection) {
             color = "\u001b[100m"; // black
         }
 

@@ -125,10 +125,14 @@ public class ClientMain {
                         System.out.println("no games currently on server!");
                     } else {
                         System.out.println();
-                        System.out.println("id │ game name");
-                        System.out.println("───┼───────────────");
+                        System.out.println("id │ game name - white - black");
+                        System.out.println("───┼───────────────────────────────");
                         for (int i = 0; i < GAME_LIST.size(); i++) {
-                            System.out.println("#" + (i+1) + " │ " + GAME_LIST.get(i).gameName());
+                            var entry = GAME_LIST.get(i);
+                            System.out.println("#" + (i+1) + " │ "+
+                                entry.gameName() + " - "+
+                                entry.whiteUsername() + " - "+
+                                entry.blackUsername());
                         }
                         System.out.println();
                     }
@@ -156,6 +160,9 @@ public class ClientMain {
                     break;
                 case "watch":
                     id = selectGameScreen(user, scanner);
+                    if (id == -1) {
+                        break;
+                    }
                     gameScreen(user, GAME_LIST.get(id), scanner, "observer");
                     break;
                 }
