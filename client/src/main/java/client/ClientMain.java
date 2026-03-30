@@ -180,11 +180,23 @@ public class ClientMain {
             Renderer.render(game.game(), perspective);
             System.out.printf("[" + game.gameName() + "]" + " control >> ");
             var command = scanner.nextLine().trim();
-            if (command.equals("q") || command.equals("quit")) {
-                session = false;
+            switch (command) {
+                case "help":
             }
         }
     }
+    /* todo
+        - help
+        - connect as observer
+        - leave game as observer
+        - connect as player
+        - leave as player
+        - move piece
+        - resign
+        - display legal moves
+        - redraw board
+        - game completion states 
+    */
 
     private static boolean tryAgainScreen(Scanner scanner, boolean attempting) {
         System.out.printf("try again? [y/n] >> ");

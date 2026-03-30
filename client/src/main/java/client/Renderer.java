@@ -7,6 +7,11 @@ import chess.ChessGame.TeamColor;
 
 public class Renderer {
         public static void render(ChessGame game, TeamColor perspective) {
+            var board = renderBoard(game, perspective);
+        }
+
+        private static String renderBoard(ChessGame game, TeamColor perspective) {
+            var result = "";
             var whiteFrame = "A ── B ── C ── D ── E ── F ── G ── H";
             var blackFrame = "H ── G ── F ── E ── D ── C ── B ── A";
 
@@ -16,24 +21,25 @@ public class Renderer {
             }
 
             var board = game.getBoard();
-            System.out.println("╭── " + colorFrame + " ──╮");
+            result += "╭── " + colorFrame + " ──╮\n";
             for (int y = 1; y < 9; y++) {
                 for (int j = 0; j < 3; j++) {
                     for (int x = 0; x < 10; x++) {
                         if (perspective == TeamColor.WHITE) {
-                            renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)), perspective);
+                            result += renderLine(x, (9-y), j, board.getPiece(new ChessPosition((9-y), x)), perspective);
                         } else {
-                            renderLine(x, y, j, board.getPiece(new ChessPosition(y, (9-x))), perspective);
+                            result += renderLine(x, y, j, board.getPiece(new ChessPosition(y, (9-x))), perspective);
                         }
                         
                     }
                 }
             }
-            System.out.println("╰── " + colorFrame + " ──╯");
+            result += "╰── " + colorFrame + " ──╯\n";
+            return result;
         }
 
 
-    private static void renderLine(int x, int y, int j, ChessPiece piece, TeamColor perspective) {
+    private static String renderLine(int x, int y, int j, ChessPiece piece, TeamColor perspective) {
         var line = "";
         var clear = "\u001b[49m";
         var color = "\u001b[47m"; // white
@@ -66,9 +72,7 @@ public class Renderer {
                     line += renderPiece(i, j, piece);
                 }
             }
-        System.out.printf(lineColor);
-        System.out.printf(line);
-        System.out.printf(clear);
+        return lineColor + line + clear;
     }
 
 
