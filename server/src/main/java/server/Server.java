@@ -6,8 +6,15 @@ import com.google.gson.JsonSyntaxException;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
+import io.javalin.websocket.WsConfig;
+import io.javalin.websocket.WsContext;
 import model.*;
 import service.*;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ServerMessage;
+
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class Server {
@@ -19,6 +26,7 @@ public class Server {
     private final UserService userService;
     private final GameDAO gameDB;
     private final GameService gameService;
+    Collection<WsContext> sessions;
 
     public Server() {
         authDB = new SQLAuthDAO();
@@ -27,6 +35,7 @@ public class Server {
         userService = new UserService(userDB, authService);
         gameDB = new SQLGameDAO();
         gameService = new GameService(gameDB, authService);
+        sessions = ConcurrentHashMap.newKeySet();
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
                 .post("/user", this::registerUser)
@@ -35,7 +44,8 @@ public class Server {
                 .get("/game", this::listGames)
                 .post("/game", this::newGame)
                 .put("/game", this::joinGame)
-                .delete("/db", this::clearDatabase);
+                .delete("/db", this::clearDatabase)
+                .ws("/ws", this::gameSocket);
     }
 
     public int run(int desiredPort) {
@@ -117,6 +127,30 @@ public class Server {
             authService.clearDatabase();
             ctx.status(200);
             ctx.result();
+        });
+    }
+
+    public void gameSocket(WsConfig socket) {
+        socket.onConnect(ctx -> {
+            sessions.add(ctx);
+        });
+
+        socket.onMessage(ctx -> {
+            var message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
+            switch (message.getCommandType()) {
+                case CONNECT:
+                    break;
+                case LEAVE:
+                    break;
+                case MAKE_MOVE:
+                    break;
+                case RESIGN:
+                    break;
+            }
+        });
+
+        socket.onClose(ctx -> {
+            sessions.remove(ctx);
         });
     }
 

@@ -1,12 +1,20 @@
 package client;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import RenderEngine.RenderEngine;
+import chess.ChessPiece;
 import chess.ChessGame.TeamColor;
+import chess.ChessMove;
+import chess.ChessPosition;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import model.AuthData;
 import model.GameData;
+import model.Notification;
 
 public class ClientMain {
     private final static ServerFacade SERVER_CONNECTION = new ServerFacade("http://127.0.0.1:8080");
@@ -156,33 +164,19 @@ public class ClientMain {
                             return null;
                         });
                     }
-                    gameScreen(user, selectedGame, scanner, color);
                     break;
                 case "watch":
                     id = selectGameScreen(user, scanner);
                     if (id == -1) {
                         break;
                     }
-                    gameScreen(user, GAME_LIST.get(id), scanner, "observer");
+                    var gameController2 = new GameController(user, GAME_LIST.get(id), scanner, "observer");
+                    var isWatching = true;
+                    while(isWatching){
+                        isWatching = gameController2.gameScreen();
+                    }
                     break;
                 }
-        }
-    }
-
-    private static void gameScreen(AuthData user, GameData game, Scanner scanner, String color) {
-        var session = true;
-        var perspective = TeamColor.WHITE;
-        if (color.equals("BLACK")) {
-            perspective = TeamColor.BLACK;
-        }
-        while(session) {
-            System.out.print("\u001b[H\u001b[2J");
-            Renderer.render(game.game(), perspective);
-            System.out.printf("[" + game.gameName() + "]" + " control >> ");
-            var command = scanner.nextLine().trim();
-            switch (command) {
-                case "help":
-            }
         }
     }
     /* todo
@@ -287,8 +281,10 @@ public class ClientMain {
             return null;
         }
     }
+	
+
+
+		
 }
 
-/*
-SOME THOUGHTS FROM THE AUTOGRADER:
-*/
+
