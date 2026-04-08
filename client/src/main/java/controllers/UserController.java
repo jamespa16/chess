@@ -1,6 +1,13 @@
 package controllers;
 
-import client.ServerFacade;
+import model.AuthData;
+import model.GameData;
+import network.HttpHelper;
+import network.ServerFacade;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class UserController {
 	private final ServerFacade connection;
@@ -15,10 +22,10 @@ public class UserController {
 		this.gameList = new ArrayList<>();
 	}
 
-	public void userScreen() {
+	public int userScreen() {
 		var scanner = new Scanner(System.in);
 		System.out.println("hello " + session.username() + "!");
-		while true) {
+		while (true) {
 			System.out.printf("[" + session.username() + "] game command >> ");
 			String input = scanner.nextLine().trim();
 			switch (input) {
@@ -28,7 +35,7 @@ public class UserController {
 					break;
 				case "logout":
 					logout();
-					return;
+					return -1;
 				case "create":
 					createGame();
 					break;
@@ -36,10 +43,10 @@ public class UserController {
 					listGames();
 					break;
 				case "play":
-					var observing = false;
+					return joinGame(true);
+					break;
 				case "watch":
-					observing = true;
-					joinGame(observing);
+					return joinGame(false);
 					break;
 			}
 		}
@@ -47,28 +54,26 @@ public class UserController {
 
 	private void printUserHelp() {
 		System.out.println("You can get this help with 'help'\n" +
-						"- logout with 'logout'\n"
-						"- create a new game with 'create'\ n
-						"- list games on the server with 'list'\ n
-						"- join a game with 'play' and the number from the list\ n
+						"- logout with 'logout'\n" +
+						"- create a new game with 'create'\n" +
+						"- list games on the server with 'list'\n" +
+						"- join a game with 'play' and the number from the list\n" +
 						"- observe a game with 'watch' and the number from the list\n");
 	}
 
 	private void logout() {
-		HttpHelper.serverRequestHandler(() -> {
-			connection.logout(session.authToken());
-		});
+		HttpHelper.serverRequestHandler(() -> connection.logout(session.authToken()));
 		System.out.println("logged out!");
 	}
 
 	private void createGame() {
 		System.out.printf("what do you want to call this game? >> ");
 		var name = scanner.nextLine().trim();
-		serverRequestHandler(() -> connection.createGame(name, session.authToken()));
+		HttpHelper.serverRequestHandler(() -> connection.createGame(name, session.authToken()));
 	}
 
 	private void listGames() {
-		updateGameList(user);
+		updateGameList();
 		if (gameList.size() == 0) {
 			System.out.println("no games currently on server!");
 		} else {
@@ -77,9 +82,9 @@ public class UserController {
 			System.out.println("───┼───────────────────────────────");
 			for (int i = 0; i < gameList.size(); i++) {
 				var entry = gameList.get(i);
-				System.out.println("#" + (i   + 1) + " │  
-							entry.gameName() + " -  "
-							entry.whiteUsername() + " -  "
+				System.out.println("#" + (i   + 1) + " │  "+
+							entry.gameName() + " -  "+
+							entry.whiteUsername() + " -  "+
 							entry.blackUsername());
 			}
 			System.out.println();
@@ -87,7 +92,7 @@ public class UserController {
 	}
 
 	private void updateGameList() {
-		var serverGames = serverRequestHandler(() -> connection.listGames(session.authToken()));
+		var serverGames = HttpHelper.serverRequestHandler(() -> connection.listGames(session.authToken()));
 		if (serverGames != null) {
 			for (GameData game : serverGames.games()) {
 				if (!gameList.contains(game)) {
@@ -97,38 +102,38 @@ public class UserController {
 		}
 	}
 
-	private void joinGame(boolean observing) {
+	private int joinGame(boolean isPlaying) {
 		var id = selectGame();
 		if (id == -1) {
-			break;
-		}
-		var color = "observer";
-		var selectedGame = gameList.get(id);
-		if (observing) {
 			return;
-		} else {
-			color = selectColor();
 		}
-		var joinedAsWhite = selectedGame.whiteUsername() != null &&
-				or.equals("WHITE") && selectedGame.whiteUsername().equals(session.username());
-		var joinedAsBlack = selectedGame.blackUsername() != null && color.equals("BLACK") &&
-				ectedGame.blackUsername().equals(session.username());
-		if (joinedAsWhite || joinedAsBlack) {
-			System.out.println("you've already joined that game!");
-		} else {
-			HttpHelper.serverRequestHandler(() -> {
-				connection.joinGame(session.authToken(), selectedGame.gameID(), color);
-			});
+
+		var selectedGame = gameList.get(id);
+		if (isPlaying) {
+			var color = selectColor();
+			var joinedAsWhite = selectedGame.whiteUsername() != null &&
+					color.equals("WHITE") && selectedGame.whiteUsername().equals(session.username());
+			var joinedAsBlack = selectedGame.blackUsername() != null && color.equals("BLACK") &&
+					selectedGame.blackUsername().equals(session.username());
+			if (joinedAsWhite || joinedAsBlack) {
+				System.out.println("you've already joined that game!");
+			} else {
+
+				HttpHelper.serverRequestHandler(() -> connection.joinGame(session.authToken(), selectedGame.gameID(), color));
+			}
 		}
+
+
 	}
 
 	private int selectGame() {
-		updateGameList(session);
+		updateGameList();
+		var attempting = true;
 		while (attempting) {
 			System.out.printf("select a game by id: >> ");
 			try {
 				var id = Integer.parseInt(scanner.nextLine().trim()) - 1;
-				if ((id > GAME_LIST.size() - 1) || (id < 0)) {
+				if ((id > gameList.size() - 1) || (id < 0)) {
 					throw new NumberFormatException();
 				} else {
 					return id;
@@ -138,6 +143,7 @@ public class UserController {
 				attempting = ControllerHelper.tryAgain(scanner);
 			}
 		}
+		return -1;
 	}
 
 	private String selectColor() {

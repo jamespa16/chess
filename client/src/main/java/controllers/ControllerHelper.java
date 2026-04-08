@@ -1,4 +1,6 @@
-package controllers
+package controllers;
+
+import java.util.Scanner;
 
 public class ControllerHelper {
 	public static boolean tryAgain(Scanner scanner) {

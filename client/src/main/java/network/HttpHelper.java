@@ -1,4 +1,4 @@
-package client;
+package network;
 
 public class HttpHelper {
 	@FunctionalInterface
@@ -8,7 +8,7 @@ public class HttpHelper {
 	
 	@FunctionalInterface
 	public interface ThrowingRunner {
-		run() throws Exception;
+		void run() throws Exception;
 	}
 	
 	public static <T> T serverRequestHandler(ThrowingSupplier<T> request) {
@@ -31,7 +31,7 @@ public class HttpHelper {
 		}
 	}
 	
-	public static serverRequestHandler(ThrowingRunner request) {
+	public static void serverRequestHandler(ThrowingRunner request) {
 		serverRequestHandler(() -> {request.run(); return null;});
 	}
 	

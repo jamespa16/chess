@@ -1,23 +1,23 @@
-package client;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Scanner;
+package controllers;
 
 import RenderEngine.RenderEngine;
-import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPosition;
 import model.AuthData;
 import model.GameData;
-import model.Notification;
+import network.ServerFacade;
+import websocket.commands.UserGameCommand;
+
+import java.util.Scanner;
+
+import static websocket.commands.UserGameCommand.CommandType.*;
 
 public class GameController {
 	private Scanner scanner;
 	private GameSocket connection;
 
-	public GameController(ServerFacade connection, AuthData session, InitGameRequest game) {
+	public GameController(ServerFacade connection, AuthData session, GameData game) {
 		this.connection = connection.getSocket(new UserGameCommand(CONNECT, session.authToken(), game.gameID()));
 	}
 
@@ -31,7 +31,7 @@ public class GameController {
 		while (true) {
 			engine.updateGame(connection.getGame());
 			engine.updateNotifications(connection.getNotifications());
-			engine.render();
+			engine.render(perspective);
 
 			var command = scanner.nextLine().trim();
 			switch (command) {
@@ -66,10 +66,7 @@ public class GameController {
 
 	private ChessPosition getPiece(String message) {
 		System.out.printf(message + " >> ");
-		return parsePos(scanner.nextLine().trim());
-	}
-
-	private static ChessPosition parsePos(String input) {
+		var input = scanner.nextLine().trim();
 		int row = input.codePointAt(0) - 'a' + 1;
 		int col = input.codePointAt(1) - '0' + 1;
 		return new ChessPosition(row, col);

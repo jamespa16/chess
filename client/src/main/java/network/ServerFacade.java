@@ -1,4 +1,4 @@
-package client;
+package network;
 
 import java.net.URI;
 import java.net.http.HttpClient;
