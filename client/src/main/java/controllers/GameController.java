@@ -6,6 +6,7 @@ import chess.ChessMove;
 import chess.ChessPosition;
 import model.AuthData;
 import model.GameData;
+import network.GameSocket;
 import network.ServerFacade;
 import websocket.commands.UserGameCommand;
 
@@ -17,8 +18,8 @@ public class GameController {
 	private Scanner scanner;
 	private GameSocket connection;
 
-	public GameController(ServerFacade connection, AuthData session, GameData game) {
-		this.connection = connection.getSocket(new UserGameCommand(CONNECT, session.authToken(), game.gameID()));
+	public GameController(GameSocket connection) {
+		this.connection = connection;
 	}
 
 	public void gameScreen() {
@@ -51,7 +52,7 @@ public class GameController {
 				case "move":
 					var start = getPiece("which piece?");
 					var destination = getPiece("to where?");
-					connection.makeMove(new ChessMove(piece, destination));
+					connection.makeMove(start, destination);
 					break;
 				case "resign":
 					// resign(user);

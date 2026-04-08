@@ -96,7 +96,7 @@ public class RenderEngine {
                     var col = x;
                     if (color == TeamColor.BLACK) {
                         row = y;
-                        col = (9-x)
+                        col = (9-x);
                         squareDirection = 1;
                     }
 
