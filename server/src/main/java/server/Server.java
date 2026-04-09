@@ -171,7 +171,7 @@ public class Server {
 
     private void socketConnect(WsContext ctx, UserGameCommand connect) {
         var auth = connect.getAuthToken();
-        var user = userService.getUsername(auth);
+        var user = authService.getUsername(auth);
         var gameID = connect.getGameID();
 
         var activeGames = gameService.listGames(auth);
@@ -184,23 +184,23 @@ public class Server {
                     message = "black";
                 }
                 sessions.put(auth, new UserConnection(auth, user, gameID, PLAYER, ctx));
-                notifyClients(gameID, user + " joined as " + message);
+                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " joined as " + message));
                 return;
             }
         }
         sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
-        notifyClients(gameID, user + "joined as an observer!");
+        notifyClients(gameID, new ServerMessage(NOTIFICATION, user + "joined as an observer!"));
     }
 
     private void socketLeave(UserGameCommand command) {
-        var user = userService.getUser(command.getAuthToken());
-        notifyClients(command.getGameID(), user + " has left");
+        var user = authService.getUsername(command.getAuthToken());
+        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " has left"));
         sessions.remove(command.getAuthToken());
     }
 
     private void socketMove(UserGameCommand command) {
         var auth = command.getAuthToken();
-        var user = userService.getUser(auth);
+        var user = authService.getUsername(auth);
         var gameID = command.getGameID();
         var move = new Gson().fromJson(command.getMove(), ChessMove.class);
         try {
@@ -209,7 +209,7 @@ public class Server {
             if (result != null) {
                 message += "resulting in " + result;
             }
-            sendGame(gameID, message, gameService.getGame(auth, gameID);
+            sendGame(gameID, message, gameService.getGame(auth, gameID));
         } catch (NotAuthorizedError e) {
             sessions.get(auth)
                     .connection()
@@ -219,7 +219,7 @@ public class Server {
 
     private void socketResign(UserGameCommand command) {
         var auth = command.getAuthToken();
-        var user = userService.getUser(auth);
+        var user = authService.getUsername(auth);
         notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + "resigned!"));
         var stale = sessions.remove(auth);
         stale.connection().closeSession();
