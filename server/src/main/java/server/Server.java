@@ -1,5 +1,6 @@
 package server;
 
+import chess.ChessGame;
 import chess.ChessMove;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -14,6 +15,7 @@ import org.eclipse.jetty.server.Authentication;
 import service.*;
 import websocket.UserConnection;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ServerMessage;
 
 import java.util.Collection;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.function.Consumer;
 import static chess.ChessGame.TeamColor.BLACK;
 import static chess.ChessGame.TeamColor.WHITE;
 import static websocket.ConnectionType.*;
+import static websocket.messages.ServerMessage.ServerMessageType.*;
 
 public class Server {
 
@@ -175,16 +178,18 @@ public class Server {
         for (GameData game : activeGames) {
             if (game.gameID() == gameID) {
                 var color = WHITE;
+                var message = "white";
                 if (game.blackUsername().equals(user)){
                     color = BLACK;
+                    message = "black";
                 }
                 sessions.put(auth, new UserConnection(auth, user, gameID, PLAYER, ctx));
-                notifyNewPlayer(gameID, user, color);
+                notifyClients(gameID, user + " joined as " + message);
                 return;
             }
         }
         sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
-        notifyNewObserver(gameID, user);
+        notifyClients(gameID, user + "joined as an observer!");
     }
 
     private void socketLeave(UserGameCommand command) {
@@ -194,31 +199,41 @@ public class Server {
     }
 
     private void socketMove(UserGameCommand command) {
-        var user = userService.getUser(command.getAuthToken());
+        var auth = command.getAuthToken();
+        var user = userService.getUser(auth);
+        var gameID = command.getGameID();
         var move = new Gson().fromJson(command.getMove(), ChessMove.class);
-        var result = gameService.makeMove(move);
-        var message = user + "moved " + move.toString();
-        if (result != null) {
-            message += "resulting in " + result;
+        try {
+            var result = gameService.makeMove(auth, gameID, move);
+            var message = user + "moved " + move.toString();
+            if (result != null) {
+                message += "resulting in " + result;
+            }
+            sendGame(gameID, message, gameService.getGame(auth, gameID);
+        } catch (NotAuthorizedError e) {
+            sessions.get(auth)
+                    .connection()
+                    .send(new ServerMessage(ERROR, user + "is not part of this game!"));
         }
-        notifyClients(command.getGameID(), message);
     }
 
     private void socketResign(UserGameCommand command) {
-        var user = userService.getUser(command.getAuthToken());
-        notifyClients(command.getGameID(), user + "resigned!");
+        var auth = command.getAuthToken();
+        var user = userService.getUser(auth);
+        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + "resigned!"));
         var stale = sessions.remove(auth);
         stale.connection().closeSession();
     }
 
-    private void notifyResignation(int id, String username) {
-
+    private void sendGame(int gameID, String message, ChessGame game) {
+        var content = new ServerMessage(LOAD_GAME, message, game);
+        notifyClients(gameID, content);
     }
 
-    private void notifyClients(int gameID, String message) {
+    private void notifyClients(int gameID, ServerMessage message) {
         sessions.forEach((auth, session) -> {
             if (session.gameID() == gameID) {
-                session.connection().send(message);
+                session.connection().send(new Gson().toJson(message));
             }
         });
     }
