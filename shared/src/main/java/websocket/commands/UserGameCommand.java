@@ -25,6 +25,10 @@ public class UserGameCommand {
         this.gameID = gameID;
     }
 
+    public String getMove() {
+        return move;
+    }
+
     public enum CommandType {
         CONNECT,
         MAKE_MOVE,

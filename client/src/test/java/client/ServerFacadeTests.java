@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import chess.ChessGame;
 import network.ServerFacade;
 import org.junit.jupiter.api.*;
 import server.Server;
@@ -92,7 +93,7 @@ public class ServerFacadeTests {
             facade.deleteDB();
             var session = facade.register(username, email, password);
             var id = facade.createGame("test1", session.authToken());
-            facade.joinGame(session.authToken(), id, "WHITE");
+            facade.joinGame(session.authToken(), id, ChessGame.TeamColor.WHITE);
         });
     }
 
@@ -154,7 +155,7 @@ public class ServerFacadeTests {
         assertThrows(Exception.class, () -> {
             facade.deleteDB();
             var session = facade.register(username, email, password);
-            facade.joinGame(session.authToken(), 0, "WHITE");
+            facade.joinGame(session.authToken(), 0, ChessGame.TeamColor.BLACK);
         });
     }
 }

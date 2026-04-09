@@ -1,5 +1,6 @@
 package server;
 
+import chess.ChessMove;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -9,13 +10,20 @@ import io.javalin.http.Context;
 import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsContext;
 import model.*;
+import org.eclipse.jetty.server.Authentication;
 import service.*;
+import websocket.UserConnection;
 import websocket.commands.UserGameCommand;
-import websocket.messages.ServerMessage;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
+
+import static chess.ChessGame.TeamColor.BLACK;
+import static chess.ChessGame.TeamColor.WHITE;
+import static websocket.ConnectionType.*;
 
 public class Server {
 
@@ -26,7 +34,7 @@ public class Server {
     private final UserService userService;
     private final GameDAO gameDB;
     private final GameService gameService;
-    Collection<WsContext> sessions;
+    Map<String, UserConnection> sessions;
 
     public Server() {
         authDB = new SQLAuthDAO();
@@ -35,7 +43,7 @@ public class Server {
         userService = new UserService(userDB, authService);
         gameDB = new SQLGameDAO();
         gameService = new GameService(gameDB, authService);
-        sessions = ConcurrentHashMap.newKeySet();
+        sessions = new ConcurrentHashMap<>();
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
                 .post("/user", this::registerUser)
@@ -132,30 +140,91 @@ public class Server {
 
     public void gameSocket(WsConfig socket) {
         socket.onConnect(ctx -> {
-            sessions.add(ctx);
+            ctx.enableAutomaticPings();
+            var connect = new Gson().fromJson(ctx.queryString(), UserGameCommand.class);
+            // look at all joined games. check if AUTH TOKEN is attached to any of them. if so PLAYER, else OBSERVER
+            socketConnect(ctx, connect);
         });
 
         socket.onMessage(ctx -> {
             var message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (message.getCommandType()) {
                 case CONNECT:
+                    socketConnect(ctx, message);
                     break;
                 case LEAVE:
                     break;
                 case MAKE_MOVE:
+                    socketMove(message);
                     break;
                 case RESIGN:
+                    socketResign(message);
                     break;
             }
         });
 
-        socket.onClose(ctx -> {
-            sessions.remove(ctx);
+        socket.onClose(ctx -> {});
+    }
+
+    private void socketConnect(WsContext ctx, UserGameCommand connect) {
+        var auth = connect.getAuthToken();
+        var user = userService.getUsername(auth);
+        var gameID = connect.getGameID();
+
+        var activeGames = gameService.listGames(auth);
+        for (GameData game : activeGames) {
+            if (game.gameID() == gameID) {
+                var color = WHITE;
+                if (game.blackUsername().equals(user)){
+                    color = BLACK;
+                }
+                sessions.put(auth, new UserConnection(auth, user, gameID, PLAYER, ctx));
+                notifyNewPlayer(gameID, user, color);
+                return;
+            }
+        }
+        sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
+        notifyNewObserver(gameID, user);
+    }
+
+    private void socketLeave(UserGameCommand command) {
+        var user = userService.getUser(command.getAuthToken());
+        notifyClients(command.getGameID(), user + " has left");
+        sessions.remove(command.getAuthToken());
+    }
+
+    private void socketMove(UserGameCommand command) {
+        var user = userService.getUser(command.getAuthToken());
+        var move = new Gson().fromJson(command.getMove(), ChessMove.class);
+        var result = gameService.makeMove(move);
+        var message = user + "moved " + move.toString();
+        if (result != null) {
+            message += "resulting in " + result;
+        }
+        notifyClients(command.getGameID(), message);
+    }
+
+    private void socketResign(UserGameCommand command) {
+        var user = userService.getUser(command.getAuthToken());
+        notifyClients(command.getGameID(), user + "resigned!");
+        var stale = sessions.remove(auth);
+        stale.connection().closeSession();
+    }
+
+    private void notifyResignation(int id, String username) {
+
+    }
+
+    private void notifyClients(int gameID, String message) {
+        sessions.forEach((auth, session) -> {
+            if (session.gameID() == gameID) {
+                session.connection().send(message);
+            }
         });
     }
 
     // All in one error handler function
-    public void handler(Context ctx, Consumer<Context> endpoint) { 
+    private void handler(Context ctx, Consumer<Context> endpoint) {
         try {
             endpoint.accept(ctx);
         } catch (JsonSyntaxException e) {

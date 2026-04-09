@@ -4,6 +4,14 @@
 
     <artifactId>shared</artifactId>
     <version>1.0.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>6.4.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
     <parent>
         <artifactId>chess</artifactId>
