@@ -9,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.function.Function;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -18,6 +19,8 @@ import model.GameRequest;
 import model.JoinRequest;
 import model.LoginRequest;
 import model.UserData;
+
+import static chess.ChessGame.TeamColor.BLACK;
 
 public class ServerFacade {
     private String url;
@@ -101,8 +104,13 @@ public class ServerFacade {
         return new Gson().fromJson(response, GameReport.class);
     }
 
-    public void joinGame(String authToken, int id, String color) throws Exception {
-        var body = new Gson().toJson(new JoinRequest(color, id));
+    public void joinGame(String authToken, int id, ChessGame.TeamColor color) throws Exception {
+        var colorStr = "WHITE";
+        if (color == BLACK) {
+            colorStr = "BLACK";
+
+        }
+        var body = new Gson().toJson(new JoinRequest(colorStr, id));
         httpRequestHelper("/game", (req) -> {
             return req.PUT(BodyPublishers.ofString(body))
             .header("authorization", authToken);

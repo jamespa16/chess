@@ -10,9 +10,7 @@ public class ControllerHelper {
 			case "y":
 			case "yes":
 				return true;
-			case "n":
-			case "no":
-				return false;
 		}
+		return false;
 	}
 }

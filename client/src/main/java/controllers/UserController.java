@@ -1,13 +1,19 @@
 package controllers;
 
+import chess.ChessGame;
 import model.AuthData;
+import model.ClientGameRequest;
 import model.GameData;
+import model.GameRequest;
 import network.HttpHelper;
 import network.ServerFacade;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import static chess.ChessGame.TeamColor.BLACK;
+import static chess.ChessGame.TeamColor.WHITE;
 
 public class UserController {
 	private final ServerFacade connection;
@@ -22,7 +28,7 @@ public class UserController {
 		this.gameList = new ArrayList<>();
 	}
 
-	public int userScreen() {
+	public ClientGameRequest userScreen() {
 		var scanner = new Scanner(System.in);
 		System.out.println("hello " + session.username() + "!");
 		while (true) {
@@ -35,7 +41,7 @@ public class UserController {
 					break;
 				case "logout":
 					logout();
-					return -1;
+					return null;
 				case "create":
 					createGame();
 					break;
@@ -44,10 +50,8 @@ public class UserController {
 					break;
 				case "play":
 					return joinGame(true);
-					break;
 				case "watch":
 					return joinGame(false);
-					break;
 			}
 		}
 	}
@@ -102,18 +106,21 @@ public class UserController {
 		}
 	}
 
-	private int joinGame(boolean isPlaying) {
+	private ClientGameRequest joinGame(boolean isPlaying) {
 		var id = selectGame();
 		if (id == -1) {
-			return;
+			return null;
 		}
 
 		var selectedGame = gameList.get(id);
 		if (isPlaying) {
 			var color = selectColor();
+			if (color == null) {
+				return null;
+			}
 			var joinedAsWhite = selectedGame.whiteUsername() != null &&
-					color.equals("WHITE") && selectedGame.whiteUsername().equals(session.username());
-			var joinedAsBlack = selectedGame.blackUsername() != null && color.equals("BLACK") &&
+					color.equals(WHITE) && selectedGame.whiteUsername().equals(session.username());
+			var joinedAsBlack = selectedGame.blackUsername() != null && color.equals(WHITE) &&
 					selectedGame.blackUsername().equals(session.username());
 			if (joinedAsWhite || joinedAsBlack) {
 				System.out.println("you've already joined that game!");
@@ -121,9 +128,9 @@ public class UserController {
 
 				HttpHelper.serverRequestHandler(() -> connection.joinGame(session.authToken(), selectedGame.gameID(), color));
 			}
+			return new ClientGameRequest(color, selectedGame.gameName());
 		}
-
-
+		return new ClientGameRequest(WHITE, selectedGame.gameName());
 	}
 
 	private int selectGame() {
@@ -146,18 +153,22 @@ public class UserController {
 		return -1;
 	}
 
-	private String selectColor() {
+	private ChessGame.TeamColor selectColor() {
 		var color = "";
 		var attempting = true;
 		while (attempting) {
+			attempting = false;
 			System.out.printf("as which player? >> ");
 			color = scanner.nextLine().trim().toUpperCase();
-			if (color.equals("WHITE") || color.equals("BLACK")) {
-				attempting = false;
+			if (color.equals("WHITE")) {
+				return WHITE;
+			} else if (color.equals("BLACK")) {
+				return BLACK;
 			} else {
+				System.out.println("enter WHITE or BLACK");
 				attempting = ControllerHelper.tryAgain(scanner);
 			}
 		}
-		return color;
+		return null;
 	}
 }

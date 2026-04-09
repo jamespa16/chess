@@ -17,9 +17,9 @@ public class ClientMain {
         var session = welcome.welcomeScreen();
         while (session != null) {
             var game = new UserController(server, session).userScreen();
-            if (game == -1) session = welcome.welcomeScreen();
+            if (game == null) session = welcome.welcomeScreen();
             var gameSocket = new GameSocket("ws://127.0.0.1:8080/ws");
-            new GameController(gameSocket).gameScreen();
+            new GameController(gameSocket).gameScreen(game.color(), game.gameName());
         }
     }
 }

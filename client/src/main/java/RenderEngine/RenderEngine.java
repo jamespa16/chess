@@ -10,7 +10,7 @@ import model.Notification;
 import java.util.ArrayList;
 
 public class RenderEngine {
-    private GameData game = null;
+    private ChessGame game = null;
     private final ArrayList<Notification> notifications = new ArrayList<>();
     private ChessPosition highlightedPiece = null;
     private int height = 28;
@@ -21,7 +21,7 @@ public class RenderEngine {
 
     public RenderEngine() {}
 
-    public void render(TeamColor color) {
+    public void render(TeamColor color, String name) {
         String[][] buffer = new String[height][width];
 
         renderFrame(buffer);
@@ -34,10 +34,10 @@ public class RenderEngine {
             }
         }
 
-        System.out.printf("[ "+game.gameName()+" ] game control >>");
+        System.out.printf("[ "+name+" ] game control >>");
     }
 
-    public void updateGame(GameData game) {
+    public void updateGame(ChessGame game) {
         this.game = game;
     }
 
@@ -82,7 +82,7 @@ public class RenderEngine {
             colorFrame = blackFrame;
         }
 
-        var board = game.game().getBoard();
+        var board = game.getBoard();
         result[0] = "╭── " + colorFrame + " ──╮";
         for (int y = 0; y < 9; y++) {
             for (int j = 0; j < 3; j++) {

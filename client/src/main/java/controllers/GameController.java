@@ -22,17 +22,13 @@ public class GameController {
 		this.connection = connection;
 	}
 
-	public void gameScreen() {
-		var perspective = TeamColor.WHITE;
-		if (connection.color().equals("BLACK"))
-			perspective = TeamColor.BLACK;
-
+	public void gameScreen(TeamColor perspective, String name) {
 		var engine = new RenderEngine();
 
 		while (true) {
 			engine.updateGame(connection.getGame());
 			engine.updateNotifications(connection.getNotifications());
-			engine.render(perspective);
+			engine.render(perspective, name);
 
 			var command = scanner.nextLine().trim();
 			switch (command) {
@@ -52,7 +48,7 @@ public class GameController {
 				case "move":
 					var start = getPiece("which piece?");
 					var destination = getPiece("to where?");
-					connection.makeMove(start, destination);
+					makeMove(start, destination);
 					break;
 				case "resign":
 					// resign(user);
@@ -72,5 +68,7 @@ public class GameController {
 		int col = input.codePointAt(1) - '0' + 1;
 		return new ChessPosition(row, col);
 	}
+
+	private void makeMove(ChessPosition start, ChessPosition end) {}
 }
 
