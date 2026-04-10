@@ -3,9 +3,8 @@ package server;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
 import dataaccess.*;
-import io.javalin.*;
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.websocket.WsContext;
 import model.*;
@@ -19,7 +18,8 @@ import java.util.function.Consumer;
 
 import static chess.ChessGame.TeamColor.BLACK;
 import static chess.ChessGame.TeamColor.WHITE;
-import static server.ConnectionType.*;
+import static server.ConnectionType.OBSERVER;
+import static server.ConnectionType.PLAYER;
 import static websocket.messages.ServerMessage.ServerMessageType.*;
 
 public class Server {
@@ -152,14 +152,14 @@ public class Server {
             var req = new Gson().fromJson(ctx.body(), JoinRequest.class);
             var user = authService.getUsername(token);
             gameService.joinGame(token, req, user);
-            
+
             ctx.status(200);
             ctx.result();
         });
-     }
+    }
 
     public void clearDatabase(Context context) { // DELETE /db
-        handler(context, (ctx)->{
+        handler(context, (ctx) -> {
             gameService.clearDatabase();
             userService.clearDatabase();
             authService.clearDatabase();
@@ -204,7 +204,7 @@ public class Server {
                     return;
                 }
             }
-            if(!validGame){
+            if (!validGame) {
                 sendError(ctx, "Game ID is invalid");
             }
         } catch (Exception e) {
@@ -234,7 +234,9 @@ public class Server {
             var gameID = command.getGameID();
             var gameData = gameService.getData(auth, gameID);
             System.out.println(gameData);
-            if (!(!Objects.equals(user, gameData.whiteUsername()) || !Objects.equals(user, gameData.blackUsername()))) throw new NotAuthorizedError();
+            if (!(!Objects.equals(user, gameData.whiteUsername()) || !Objects.equals(user, gameData.blackUsername()))) {
+                throw new NotAuthorizedError();
+            }
             System.out.println("computing move");
             var result = gameService.makeMove(auth, gameID, command.getMove());
 
@@ -274,8 +276,8 @@ public class Server {
             gameService.resign(auth, stale.gameID());
             notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " resigned! "), null);
             List<String> staleTokens = new ArrayList<>();
-            sessions.forEach((token, UserConnection) -> {
-                if (UserConnection.gameID() == stale.gameID()) {
+            sessions.forEach((token, connection) -> {
+                if (connection.gameID() == stale.gameID()) {
                     staleTokens.add(token);
                 }
             });
@@ -289,7 +291,9 @@ public class Server {
     private void notifyClients(int gameID, ServerMessage message, String except) {
         sessions.forEach((auth, session) -> {
             var exclude = false;
-            if (except != null) exclude = session.auth().equals(except) ;
+            if (except != null) {
+                exclude = session.auth().equals(except);
+            }
             if (!exclude && session.gameID() == gameID && connections.contains(session.connection())) {
                 System.out.println("sending to " + session.username() + " @ " + session.connection().sessionId());
                 session.connection().send(new Gson().toJson(message));

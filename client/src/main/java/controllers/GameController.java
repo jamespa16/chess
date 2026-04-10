@@ -1,6 +1,5 @@
 package controllers;
 
-import RenderEngine.RenderEngine;
 import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import chess.ChessMove;
@@ -10,6 +9,7 @@ import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.Session;
 import model.Notification;
 import network.GameSocket;
+import renderer.RenderEngine;
 import websocket.commands.UserGameCommand;
 
 import java.io.IOException;
