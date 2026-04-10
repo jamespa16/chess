@@ -1,13 +1,18 @@
 package dataaccess;
 
-import chess.ChessGame;
 import model.GameData;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import chess.ChessGame;
 
 public class SQLGameDAOTests {
     @Test
@@ -41,14 +46,14 @@ public class SQLGameDAOTests {
 
         for (Integer game : list) {
             assertTrue(
-                    db.listGames()
-                            .stream()
-                            .anyMatch((data) -> data.gameID() == game.intValue())
+                db.listGames()
+                .stream()
+                .anyMatch((data) -> data.gameID() == game.intValue())
             );
         }
     }
 
-    @Test
+    @Test 
     void updateGame() {
         var db = new SQLGameDAO();
         db.clear();
@@ -79,14 +84,14 @@ public class SQLGameDAOTests {
 
         for (Integer game : list) {
             assertTrue(
-                    db.listGames()
-                            .stream()
-                            .anyMatch((data) -> data.gameID() == game.intValue())
+                db.listGames()
+                .stream()
+                .anyMatch((data) -> data.gameID() == game.intValue())
             );
         }
     }
 
-    @Test
+    @Test 
     void updateFakeGame() {
         var db = new SQLGameDAO();
         db.clear();

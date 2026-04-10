@@ -3,6 +3,7 @@ package dataaccess;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+
 import model.GameData;
 
 import java.sql.ResultSet;
@@ -46,7 +47,7 @@ public class SQLGameDAO implements GameDAO {
                 command.executeUpdate();
 
                 var result = command.getGeneratedKeys();
-                if (result.next()) {
+                if(result.next()) {
                     return result.getInt(1);
                 }
 
@@ -61,25 +62,17 @@ public class SQLGameDAO implements GameDAO {
     public GameData getGame(int gameID) {
         var query = "SELECT * FROM GameTable WHERE gameID =?";
         return DatabaseManager.runSQLCommand(query, (command) -> {
-            try {
-                command.setInt(1, gameID);
-                var result = command.executeQuery();
-                if (result.next()) {
-                    return resultToGameData(result);
-                }
-                throw new DataAccessException("get game failed");
-            } catch (SQLException e) {
-                throw new DataAccessException(e.getMessage());
-            }
+           try {
+               command.setInt(1, gameID);
+               var result = command.executeQuery();
+               if(result.next()) {
+                   return resultToGameData(result);
+               }
+               throw new DataAccessException("get game failed");
+           } catch (SQLException e) {
+               throw new DataAccessException(e.getMessage());
+           }
         });
-    }
-
-    private GameData resultToGameData(ResultSet result) throws SQLException {
-        return new GameData(result.getInt("gameID"),
-                result.getString("whiteUsername"),
-                result.getString("blackUsername"),
-                result.getString("gameName"),
-                new Gson().fromJson(result.getString("game"), ChessGame.class));
     }
 
     @Override
@@ -89,7 +82,7 @@ public class SQLGameDAO implements GameDAO {
             try {
                 var result = command.executeQuery();
                 var list = new HashSet<GameData>();
-                while (result.next()) {
+                while(result.next()) {
                     list.add(resultToGameData(result));
                 }
                 return list;
@@ -129,5 +122,13 @@ public class SQLGameDAO implements GameDAO {
             }
             return 0;
         });
+    }
+
+    private GameData resultToGameData(ResultSet result) throws SQLException {
+        return new GameData(result.getInt("gameID"),
+                result.getString("whiteUsername"),
+                result.getString("blackUsername"),
+                result.getString("gameName"),
+                new Gson().fromJson(result.getString("game"), ChessGame.class));
     }
 }

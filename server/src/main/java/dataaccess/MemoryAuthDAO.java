@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 public class MemoryAuthDAO implements AuthDAO {
-    private final Collection<AuthData> db;
+    private Collection<AuthData> db;
 
     public MemoryAuthDAO() {
         this.db = new HashSet<>();
@@ -17,7 +17,7 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public AuthData createAuth(UserData user) {
-        try {
+        try { 
             AuthData newAuth = new AuthData(UUID.randomUUID().toString(), user.username());
             this.db.add(newAuth);
             return newAuth;
@@ -38,9 +38,9 @@ public class MemoryAuthDAO implements AuthDAO {
     @Override
     public void deleteAuth(String authToken) {
         var token = db.stream()
-                .filter((AuthData auth) -> authToken.equals(auth.authToken()))
-                .findFirst()
-                .orElseThrow(NotAuthorizedError::new);
+            .filter((AuthData auth) -> authToken.equals(auth.authToken()))
+            .findFirst()
+            .orElseThrow(NotAuthorizedError::new);
 
         db.remove(token);
     }

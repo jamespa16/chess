@@ -1,10 +1,5 @@
 package network;
 
-import chess.ChessGame;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import model.*;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,13 +9,24 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.function.Function;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import model.AuthData;
+import model.GameReport;
+import model.GameRequest;
+import model.JoinRequest;
+import model.LoginRequest;
+import model.UserData;
+
 import static chess.ChessGame.TeamColor.BLACK;
 
 public class ServerFacade {
+    private String url;
     private final HttpClient client = HttpClient.newHttpClient();
-    private final String url;
 
-    public ServerFacade(String url) {
+    public ServerFacade(String url){
         this.url = url;
     }
 
@@ -28,9 +34,9 @@ public class ServerFacade {
         var body = new Gson().toJson(new LoginRequest(user, password));
         var endpoint = "/session";
         var request = HttpRequest.newBuilder()
-                .uri(new URI(url + endpoint))
-                .timeout(java.time.Duration.ofMillis(5000))
-                .POST(BodyPublishers.ofString(body)).build();
+            .uri(new URI(url + endpoint))
+            .timeout(java.time.Duration.ofMillis(5000))
+            .POST(BodyPublishers.ofString(body)).build();
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
@@ -44,30 +50,30 @@ public class ServerFacade {
         var body = new Gson().toJson(new UserData(user, password, email));
         var endpoint = "/user";
         var request = HttpRequest.newBuilder()
-                .uri(new URI(url + endpoint))
-                .timeout(java.time.Duration.ofMillis(5000))
-                .POST(BodyPublishers.ofString(body)).build();
+            .uri(new URI(url + endpoint))
+            .timeout(java.time.Duration.ofMillis(5000))
+            .POST(BodyPublishers.ofString(body)).build();
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
             return new Gson().fromJson(response.body(), AuthData.class);
         }
 
-        throw new Exception(response.statusCode() + ": " + response.body());
+        throw new Exception("" + response.statusCode() + ": " + response.body());
     }
 
     public void logout(String authToken) throws Exception {
         var endpoint = "/session";
         var request = HttpRequest.newBuilder()
-                .uri(new URI(url + endpoint))
-                .timeout(java.time.Duration.ofMillis(5000))
-                .DELETE()
-                .header("authorization", authToken)
-                .build();
+            .uri(new URI(url + endpoint))
+            .timeout(java.time.Duration.ofMillis(5000))
+            .DELETE()
+            .header("authorization", authToken)
+            .build();
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            throw new Exception(response.statusCode() + ": " + response.body());
+            throw new Exception("" + response.statusCode() + ": " + response.body());
         }
     }
 
@@ -75,20 +81,19 @@ public class ServerFacade {
         var body = new Gson().toJson(new GameRequest(name));
         var endpoint = "/game";
         var request = HttpRequest.newBuilder()
-                .uri(new URI(url + endpoint))
-                .timeout(java.time.Duration.ofMillis(5000))
-                .POST(BodyPublishers.ofString(body))
-                .header("authorization", authToken)
-                .build();
+            .uri(new URI(url + endpoint))
+            .timeout(java.time.Duration.ofMillis(5000))
+            .POST(BodyPublishers.ofString(body))
+            .header("authorization", authToken)
+            .build();
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
-            Map<String, Integer> result = new Gson().fromJson(response.body(), new TypeToken<Map<String, Integer>>() {
-            }.getType());
+            Map<String, Integer> result = new Gson().fromJson(response.body(), new TypeToken<Map<String, Integer>>() {}.getType());
             return result.get("gameID");
         }
 
-        throw new Exception(response.statusCode() + ": " + response.body());
+        throw new Exception("" + response.statusCode() + ": " + response.body());
     }
 
     public GameReport listGames(String authToken) throws Exception {
@@ -97,21 +102,6 @@ public class ServerFacade {
         });
 
         return new Gson().fromJson(response, GameReport.class);
-    }
-
-    private String httpRequestHelper(String endpoint, Function<Builder, Builder> details) throws Exception {
-        var request = details.apply(HttpRequest.newBuilder()
-                        .uri(new URI(url + endpoint))
-                        .timeout(java.time.Duration.ofMillis(5000)))
-                .build();
-
-        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            throw new Exception(response.statusCode() + ": " + response.body());
-        }
-
-        return response.body();
     }
 
     public void joinGame(String authToken, int id, ChessGame.TeamColor color) throws Exception {
@@ -123,11 +113,26 @@ public class ServerFacade {
         var body = new Gson().toJson(new JoinRequest(colorStr, id));
         httpRequestHelper("/game", (req) -> {
             return req.PUT(BodyPublishers.ofString(body))
-                    .header("authorization", authToken);
+            .header("authorization", authToken);
         });
     }
 
     public void deleteDB() throws Exception {
         httpRequestHelper("/db", (req) -> req.DELETE());
+    }
+
+    private String httpRequestHelper(String endpoint, Function<Builder, Builder> details) throws Exception {
+        var request = details.apply(HttpRequest.newBuilder()
+                .uri(new URI(url + endpoint))
+                .timeout(java.time.Duration.ofMillis(5000)))
+               .build();
+
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new Exception("" + response.statusCode() + ": " + response.body());
+        }
+
+       return response.body();
     }
 }

@@ -31,16 +31,16 @@ public abstract class EqualsTestingUtility<T> {
         this.itemsPlural = itemsPlural;
     }
 
+    protected abstract T buildOriginal();
+    protected abstract Collection<T> buildAllDifferent();
+
+
     @BeforeEach
     public void setUp() {
         original = buildOriginal();
         equivalent = buildOriginal(); // For a second time
         allDifferent = buildAllDifferent();
     }
-
-    protected abstract T buildOriginal();
-
-    protected abstract Collection<T> buildAllDifferent();
 
     @Test
     @DisplayName("Equals Testing")

@@ -1,8 +1,10 @@
 package websocket.commands;
 
-import chess.ChessMove;
-
 import java.util.Objects;
+
+import com.google.gson.Gson;
+
+import chess.ChessMove;
 
 /**
  * Represents a command a user can send the server over a websocket
@@ -34,6 +36,25 @@ public class UserGameCommand {
         return move;
     }
 
+    public enum CommandType {
+        CONNECT,
+        MAKE_MOVE,
+        LEAVE,
+        RESIGN
+    }
+
+    public CommandType getCommandType() {
+        return commandType;
+    }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public Integer getGameID() {
+        return gameID;
+    }
+
     public void setMove(ChessMove move) {
         this.move = move;
     }
@@ -51,27 +72,8 @@ public class UserGameCommand {
                 Objects.equals(getGameID(), that.getGameID());
     }
 
-    public CommandType getCommandType() {
-        return commandType;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public Integer getGameID() {
-        return gameID;
-    }
-
     @Override
     public int hashCode() {
         return Objects.hash(getCommandType(), getAuthToken(), getGameID());
-    }
-
-    public enum CommandType {
-        CONNECT,
-        MAKE_MOVE,
-        LEAVE,
-        RESIGN
     }
 }

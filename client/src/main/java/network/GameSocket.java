@@ -1,23 +1,27 @@
 package network;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import jakarta.websocket.*;
+import model.GameData;
 import model.Notification;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static chess.ChessGame.TeamColor.*;
 import static websocket.commands.UserGameCommand.CommandType.CONNECT;
 
 @ClientEndpoint
 public class GameSocket {
-    String auth;
-    int gameID;
     private ChessGame game = null;
     private Collection<Notification> notifications = new ArrayList<>();
+    String auth;
+    int gameID;
 
 
     public GameSocket(String url, String authToken, int gameID) throws Exception {
@@ -36,22 +40,10 @@ public class GameSocket {
         this.notifications = getNotifications();
     }
 
-    public void send(Session session, UserGameCommand command) throws Exception {
-        session.getBasicRemote().sendText(new Gson().toJson(command));
-    }
-
-    public ChessGame getGame() {
-        return game;
-    }
-
-    public Collection<Notification> getNotifications() {
-        return notifications;
-    }
-
     @OnMessage
     public void receive(String ctx) {
         var msg = new Gson().fromJson(ctx, ServerMessage.class);
-        switch (msg.getServerMessageType()) {
+        switch(msg.getServerMessageType()) {
             case LOAD_GAME -> {
                 this.game = msg.game;
             }
@@ -64,8 +56,15 @@ public class GameSocket {
         }
     }
 
-    @OnClose
-    public void close() {
+    public void send(Session session, UserGameCommand command) throws Exception {
+        session.getBasicRemote().sendText(new Gson().toJson(command));
     }
+
+    @OnClose
+    public void close() {}
+
+    public ChessGame getGame() { return game; }
+
+    public Collection<Notification> getNotifications() { return notifications; }
 
 }

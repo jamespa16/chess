@@ -15,15 +15,6 @@ public class ChessPosition {
         this.col = col;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof ChessPosition rhs) {
-            return (rhs.getRow() == this.getRow()) && (rhs.getColumn() == this.getColumn());
-        } else {
-            return false;
-        }
-    }
-
     /**
      * @return which row this position is in
      * 1 codes for the bottom row
@@ -38,6 +29,15 @@ public class ChessPosition {
      */
     public int getColumn() {
         return col;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ChessPosition rhs) {
+            return (rhs.getRow() == this.getRow()) && (rhs.getColumn() == this.getColumn());
+        } else {
+            return false;
+        }
     }
 
     @Override

@@ -10,15 +10,15 @@ public class AuthService {
         this.db = db;
     }
 
-    public String createAuth(UserData user) {
+    public String createAuth(UserData user){
         return db.createAuth(user).authToken();
     }
 
-    public String getAuth(UserData user) {
+    public String getAuth(UserData user){
         return db.getAuth(user).authToken();
     }
 
-    public void deleteAuth(String authToken) {
+    public void deleteAuth(String authToken){
         db.deleteAuth(authToken);
     }
 

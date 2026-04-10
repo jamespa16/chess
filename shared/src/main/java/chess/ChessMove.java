@@ -34,14 +34,6 @@ public class ChessMove {
         return end;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ChessMove chessMove)) {
-            return false;
-        }
-        return Objects.equals(start, chessMove.start) && Objects.equals(end, chessMove.end) && getPromotionPiece() == chessMove.getPromotionPiece();
-    }
-
     /**
      * Gets the type of piece to promote a pawn to if pawn promotion is part of this
      * chess move
@@ -50,6 +42,14 @@ public class ChessMove {
      */
     public ChessPiece.PieceType getPromotionPiece() {
         return promotionPiece;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ChessMove chessMove)) {
+            return false;
+        }
+        return Objects.equals(start, chessMove.start) && Objects.equals(end, chessMove.end) && getPromotionPiece() == chessMove.getPromotionPiece();
     }
 
     @Override

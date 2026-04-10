@@ -28,6 +28,16 @@ public class ChessBoard {
     }
 
     /**
+     * Adds a chess piece to the chessboard
+     *
+     * @param position where to add the piece to
+     * @param piece    the piece to add
+     */
+    public void addPiece(ChessPosition position, ChessPiece piece) {
+        board[position.getRow() - 1][position.getColumn() - 1] = piece;
+    }
+
+    /**
      * Gets a chess piece on the chessboard
      *
      * @param position The position to get the piece from
@@ -85,24 +95,14 @@ public class ChessBoard {
         addPiece(new ChessPosition(row, 8), new ChessPiece(color, ChessPiece.PieceType.ROOK));
     }
 
-    /**
-     * Adds a chess piece to the chessboard
-     *
-     * @param position where to add the piece to
-     * @param piece    the piece to add
-     */
-    public void addPiece(ChessPosition position, ChessPiece piece) {
-        board[position.getRow() - 1][position.getColumn() - 1] = piece;
+    public void removePiece(ChessPosition target){
+        board[target.getRow() - 1][target.getColumn() - 1] = null;
     }
 
     public void movePiece(ChessPosition start, ChessPosition end) {
         ChessPiece piece = this.getPiece(start);
         this.addPiece(end, piece);
         this.removePiece(start);
-    }
-
-    public void removePiece(ChessPosition target) {
-        board[target.getRow() - 1][target.getColumn() - 1] = null;
     }
 
     @Override
@@ -113,7 +113,7 @@ public class ChessBoard {
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
                 if (board[i][j] != null && that.board[i][j] != null) {
-                    if (board[i][j].getPieceType() != that.board[i][j].getPieceType()) {
+                    if(board[i][j].getPieceType() != that.board[i][j].getPieceType()) {
                         return false;
                     }
                 } else if (board[i][j] == null && that.board[i][j] != null) {
