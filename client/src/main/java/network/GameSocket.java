@@ -1,70 +1,46 @@
 package network;
 
-import chess.ChessGame;
-import chess.ChessMove;
 import com.google.gson.Gson;
-import jakarta.websocket.*;
-import model.GameData;
+import controllers.GameController;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
 import model.Notification;
-import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import static chess.ChessGame.TeamColor.*;
-import static websocket.commands.UserGameCommand.CommandType.CONNECT;
 
 @ClientEndpoint
 public class GameSocket {
-    private ChessGame game = null;
-    private Collection<Notification> notifications = new ArrayList<>();
-    String auth;
-    int gameID;
+    GameController controller;
 
-
-    public GameSocket(String url, String authToken, int gameID) throws Exception {
-        this.auth = authToken;
-        this.gameID = gameID;
+    public GameSocket(GameController controller) {
+        this.controller = controller;
     }
 
     @OnOpen
-    public void open(Session session) {
-        try {
-            send(session, new UserGameCommand(CONNECT, auth, gameID));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        this.game = getGame();
-        this.notifications = getNotifications();
+    public void open() {
+        System.out.println("connected to server ...");
     }
 
     @OnMessage
     public void receive(String ctx) {
+        System.out.println("msg: " + ctx);
         var msg = new Gson().fromJson(ctx, ServerMessage.class);
-        switch(msg.getServerMessageType()) {
+        switch (msg.getServerMessageType()) {
             case LOAD_GAME -> {
-                this.game = msg.game;
+                controller.game = msg.game;
             }
             case ERROR -> {
-
+                controller.notifications.add(new Notification("error", msg.message));
             }
             case NOTIFICATION -> {
-                notifications.add(new Notification("server", msg.message));
+                controller.notifications.add(new Notification("server", msg.message));
             }
         }
     }
 
-    public void send(Session session, UserGameCommand command) throws Exception {
-        session.getBasicRemote().sendText(new Gson().toJson(command));
-    }
-
     @OnClose
-    public void close() {}
-
-    public ChessGame getGame() { return game; }
-
-    public Collection<Notification> getNotifications() { return notifications; }
+    public void close() {
+    }
 
 }

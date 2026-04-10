@@ -1,14 +1,9 @@
 package client;
 
-import jakarta.websocket.ContainerProvider;
-import model.AuthData;
-import controllers.WelcomeController;
-import controllers.UserController;
 import controllers.GameController;
-import network.GameSocket;
+import controllers.UserController;
+import controllers.WelcomeController;
 import network.ServerFacade;
-
-import java.net.URI;
 
 public class ClientMain {
     public static void main(String[] args) throws Exception {
@@ -20,8 +15,7 @@ public class ClientMain {
             if (game == null) {
                 session = welcome.welcomeScreen();
             } else {
-                var gameSocket = new GameSocket("ws://127.0.0.1:8080/ws", session.authToken(), game.gameID());
-                new GameController(gameSocket, "ws://127.0.0.1:8080/ws").gameScreen(game.color(), game.gameName());
+                new GameController("ws://127.0.0.1:8080/ws", session.authToken(), game.gameID()).gameScreen(game.color(), game.gameName());
             }
         }
     }
