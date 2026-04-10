@@ -18,10 +18,7 @@ import websocket.UserConnection;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -43,6 +40,7 @@ public class Server {
     private final GameService gameService;
     Collection<WsContext> connections;
     Map<String, UserConnection> sessions;
+
 
     public Server() {
         authDB = new SQLAuthDAO();
@@ -70,7 +68,7 @@ public class Server {
                     });
 
                     socket.onMessage(ctx -> {
-                        System.out.println("MESSAGE RECIEVED " + ctx.sessionId() + " " + ctx.message());
+                        System.out.println("MESSAGE RECEIVED " + ctx.sessionId());
                         var message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
                         switch (message.getCommandType()) {
                             case CONNECT:
@@ -186,14 +184,23 @@ public class Server {
             var activeGames = gameService.listGames(auth);
             var validGame = false;
             for (GameData game : activeGames) {
+
                 if (game.gameID() == gameID) {
                     validGame = true;
                     var color = WHITE;
-                    var message = "white";
-                    if (game.blackUsername().equals(user)) {
+                    var message = "";
+                    if (Objects.equals(game.whiteUsername(), user)) {
+                        message = "white";
+                    } else if (game.blackUsername().equals(user)) {
                         color = BLACK;
                         message = "black";
+                    } else {
+                        sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
+                        ctx.send(new Gson().toJson(new ServerMessage(LOAD_GAME, null, game.game())));
+                        notifyClients(gameID, new ServerMessage(NOTIFICATION, user + "is now observing"), auth);
+                        return;
                     }
+
                     System.out.println("notifying others...");
                     notifyClients(gameID, new ServerMessage(NOTIFICATION, message + " is now " + user), null);
                     System.out.println("adding client to game...");
@@ -204,11 +211,8 @@ public class Server {
                     return;
                 }
             }
-            if (validGame) {
-                sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
-                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + "joined as an observer!"), null);
-            } else {
-                sendError(ctx,"Error: Invalid Game ID");
+            if(!validGame){
+                sendError(ctx, "Game ID is invalid");
             }
         } catch (Exception e) {
             sendError(ctx, "Connection Error: " + e.getMessage());
@@ -218,25 +222,41 @@ public class Server {
 
     private void socketLeave(UserGameCommand command) {
         var user = authService.getUsername(command.getAuthToken());
-        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " has left"), null);
+        gameService.resign(command.getAuthToken(), command.getGameID());
         sessions.remove(command.getAuthToken());
+        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " has left"), null);
+
     }
 
     private void socketMove(WsContext ctx, UserGameCommand command) {
-        var auth = command.getAuthToken();
-        var gameID = command.getGameID();
+        if (!sessions.containsKey(command.getAuthToken())) {
+            sendError(ctx, "you have no games to move");
+            return;
+        }
 
         try {
-            System.out.println("computing move");
+            System.out.println("getting context ...");
+            var auth = command.getAuthToken();
             var user = authService.getUsername(auth);
+            var gameID = command.getGameID();
+            var gameData = gameService.getData(auth, gameID);
+            System.out.println(gameData);
+            if (!(!Objects.equals(user, gameData.whiteUsername()) || !Objects.equals(user, gameData.blackUsername()))) throw new NotAuthorizedError();
+            System.out.println("computing move");
             var result = gameService.makeMove(auth, gameID, command.getMove());
-            var message = user + "moved " + command.getMove().toString();
-            if (result != null) {
-                message += "resulting in " + result;
-            }
+
             System.out.println("broadcasting move ...");
             var content = new ServerMessage(LOAD_GAME, null, gameService.getGame(auth, gameID));
             notifyClients(gameID, content, null);
+
+            if (result != null && result.contains("checkmate")) {
+                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " checkmate!"), null);
+            } else if (result != null && result.contains("check")) {
+                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " check!"), null);
+            } else if (result != null && result.contains("stalemate")) {
+                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " stalemate!"), null);
+            }
+
             notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " moved"), auth);
         } catch (NotAuthorizedError e) {
             sendError(ctx, "you are not part of this game!");
@@ -248,13 +268,27 @@ public class Server {
     private void socketResign(WsContext ctx, UserGameCommand command) {
         var auth = command.getAuthToken();
         var user = authService.getUsername(auth);
-        System.out.println("resigning " + user);
-        if (sessions.get(auth).type() == OBSERVER) {
-            sendError(ctx, "you can't resign");
+        System.out.println("resigning " + user + " @ " + ctx.sessionId());
+        var data = gameService.getData(auth, command.getGameID());
+        if (sessions.get(auth) == null) {
+            sendError(ctx, "you have no games");
+        } else if (sessions.get(auth).type() == OBSERVER) {
+            sendError(ctx, "you were just watching");
+        } else if (data.whiteUsername() == null || data.blackUsername() == null) {
+            sendError(ctx, "that would orphan the game!");
         } else {
-            notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " resigned!"), null);
-            var stale = sessions.remove(auth);
+            var stale = sessions.get(auth);
             gameService.resign(auth, stale.gameID());
+            notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " resigned! "), null);
+            List<String> staleTokens = new ArrayList<>();
+            sessions.forEach((token, UserConnection) -> {
+                if (UserConnection.gameID() == stale.gameID()) {
+                    staleTokens.add(token);
+                }
+            });
+            for (String token : staleTokens) {
+                sessions.remove(token);
+            }
             stale.connection().closeSession();
         }
     }

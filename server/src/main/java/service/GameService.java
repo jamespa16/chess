@@ -82,16 +82,22 @@ public class GameService {
             var gameData = db.getGame(gameID);
             var game = gameData.game();
 
-            var pieceColor = game.getBoard().getPiece(move.getStartPosition()).getTeamColor();
+            var white = gameData.whiteUsername();
+            var black = gameData.blackUsername();
+            var user = authService.getUsername(auth);
 
-            if (pieceColor == WHITE) {
-                if(!Objects.equals(gameData.whiteUsername(), authService.getUsername(auth))) return "invalid";
-            } else {
-                if(!Objects.equals(gameData.blackUsername(), authService.getUsername(auth))) return "invalid";
-            }
+            var pieceColor = game.getBoard().getPiece(move.getStartPosition()).getTeamColor();
+            ChessGame.TeamColor userColor = null;
+
+            if (Objects.equals(user, white)) userColor = WHITE;
+            else if (Objects.equals(user, black)) userColor = BLACK;
+
+            if (userColor == null || pieceColor != userColor) return "invalid";
+
 
             try {
                 game.makeMove(move);
+                db.updateGame(new GameData(gameID, white, black, gameData.gameName(), game));
             } catch (InvalidMoveException e) {
                 return "invalid";
             }
@@ -126,18 +132,20 @@ public class GameService {
     }
 
     public ChessGame getGame(String auth, int gameID) {
-        return secure(auth, () -> {
-            return db.getGame(gameID).game();
-        });
+        return secure(auth, () -> db.getGame(gameID).game());
+    }
+
+    public GameData getData(String auth, int gameID) {
+        return secure(auth, () -> db.getGame(gameID));
     }
 
     public void resign(String auth, int gameID) {
          secure(auth, () -> {
             var gameData = db.getGame(gameID);
             var user = authService.getUsername(auth);
-            if (gameData.whiteUsername().equals(user)) {
+            if (Objects.equals(gameData.whiteUsername(), user)) {
                 db.updateGame(new GameData(gameID, null, gameData.blackUsername(), gameData.gameName(), gameData.game()));
-            } else if (gameData.blackUsername().equals(user)) {
+            } else if (Objects.equals(gameData.blackUsername(), user)) {
                 db.updateGame(new GameData(gameID, gameData.whiteUsername(), null, gameData.gameName(), gameData.game()));
             }
 
