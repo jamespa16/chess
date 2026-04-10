@@ -1,11 +1,11 @@
 package dataaccess;
 
 import chess.ChessGame;
+import com.google.gson.JsonSyntaxException;
 import model.GameData;
 
 import java.util.Collection;
 import java.util.HashSet;
-import com.google.gson.JsonSyntaxException;
 
 public class MemoryGameDAO implements GameDAO {
     private final Collection<GameData> gameList;

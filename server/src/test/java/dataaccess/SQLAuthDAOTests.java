@@ -1,20 +1,19 @@
 package dataaccess;
 
 import model.UserData;
-import service.NotAuthorizedError;
-
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
+import service.NotAuthorizedError;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class SQLAuthDAOTests {
-    private String username = "bob";
-    private String email = "bob@boingo.com";
-    private String password = "1234";
-    private UserData user = new UserData(username, password, email);
+    private final String username = "bob";
+    private final String email = "bob@boingo.com";
+    private final String password = "1234";
+    private final UserData user = new UserData(username, password, email);
 
     @Test
     void createTableTest() {
@@ -50,7 +49,7 @@ public class SQLAuthDAOTests {
         assertDoesNotThrow(db::clear);
     }
 
-    @Test 
+    @Test
     void verifyTest() {
         var db = new SQLAuthDAO();
         db.clear();
@@ -88,7 +87,7 @@ public class SQLAuthDAOTests {
         assertThrows(NotAuthorizedError.class, () -> db.deleteAuth(UUID.randomUUID().toString()));
     }
 
-    @Test 
+    @Test
     void verifyNoAuthTest() {
         var db = new SQLAuthDAO();
         db.clear();

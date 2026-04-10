@@ -4,7 +4,8 @@ import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
 import model.LoginRequest;
 import model.UserData;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTests {
@@ -25,33 +26,41 @@ public class UserServiceTests {
     }
 
     @Test
-    void registerExistingUser(){
+    void registerExistingUser() {
         var userService = setup();
         assertThrows(UserAlreadyRegisteredError.class, () -> userService.registerUser(user));
     }
 
+    private UserService setup() {
+        var db = new MemoryUserDAO();
+        var authService = new AuthService(new MemoryAuthDAO());
+        var userService = new UserService(db, authService);
+        userService.registerUser(user);
+        return userService;
+    }
+
     @Test
-    void loginUserTest(){
+    void loginUserTest() {
         var userService = setup();
         assertInstanceOf(String.class, userService.loginUser(req));
     }
 
     @Test
-    void loginUserUnauthorizedTest(){
+    void loginUserUnauthorizedTest() {
         var userService = setup();
         var req = new LoginRequest(username, "bobrocks");
         assertThrows(NotAuthorizedError.class, () -> userService.loginUser(req));
     }
 
     @Test
-    void logoutUserTest(){
+    void logoutUserTest() {
         var userService = setup();
         var authToken = userService.loginUser(req);
         assertDoesNotThrow(() -> userService.logoutUser(authToken));
     }
 
     @Test
-    void logoutUserUnauthorizedTest(){
+    void logoutUserUnauthorizedTest() {
         var userService = setup();
         var authToken = userService.loginUser(req);
         assertDoesNotThrow(() -> userService.logoutUser(authToken));
@@ -62,13 +71,5 @@ public class UserServiceTests {
         var userService = setup();
         userService.clearDatabase();
         assertDoesNotThrow(() -> userService.registerUser(user));
-    }
-
-    private UserService setup() {
-        var db = new MemoryUserDAO();
-        var authService = new AuthService(new MemoryAuthDAO());
-        var userService = new UserService(db, authService);
-        userService.registerUser(user);
-        return userService;
     }
 }

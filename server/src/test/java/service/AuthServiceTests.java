@@ -1,25 +1,28 @@
 package service;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-
 import dataaccess.DataAccessException;
 import dataaccess.MemoryAuthDAO;
 import model.UserData;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AuthServiceTests {
     private final String username = "bob";
     private final String password = "1234";
     private final String email = "bob@boingo.com";
-    private UserData user = new UserData(username, password, email);
+    private final UserData user = new UserData(username, password, email);
 
     @Test
     void createAuthTest() {
         var authService = setup();
         assertInstanceOf(String.class, authService.createAuth(user));
+    }
+
+    private AuthService setup() {
+        return new AuthService(new MemoryAuthDAO());
     }
 
     @Test
@@ -42,7 +45,7 @@ public class AuthServiceTests {
         assertDoesNotThrow(() -> authService.clearDatabase());
     }
 
-    @Test 
+    @Test
     void verifyTest() {
         var authService = setup();
         var token = authService.createAuth(user);
@@ -74,7 +77,7 @@ public class AuthServiceTests {
         assertThrows(NotAuthorizedError.class, () -> authService.deleteAuth(UUID.randomUUID().toString()));
     }
 
-    @Test 
+    @Test
     void verifyFailsTest() {
         var authService = setup();
         assertFalse(authService.verify(UUID.randomUUID().toString()));
@@ -84,9 +87,5 @@ public class AuthServiceTests {
     void getUsernameNotFoundTest() {
         var authService = setup();
         assertThrows(NotAuthorizedError.class, () -> authService.getUsername(UUID.randomUUID().toString()));
-    }
-
-    private AuthService setup() {
-        return new AuthService(new MemoryAuthDAO());
     }
 }

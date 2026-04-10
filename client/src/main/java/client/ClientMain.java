@@ -1,14 +1,10 @@
 package client;
 
-import jakarta.websocket.ContainerProvider;
-import model.AuthData;
-import controllers.WelcomeController;
-import controllers.UserController;
 import controllers.GameController;
+import controllers.UserController;
+import controllers.WelcomeController;
 import network.GameSocket;
 import network.ServerFacade;
-
-import java.net.URI;
 
 public class ClientMain {
     public static void main(String[] args) throws Exception {

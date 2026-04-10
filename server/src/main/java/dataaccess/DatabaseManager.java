@@ -1,6 +1,9 @@
 package dataaccess;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.function.Function;
 
@@ -30,6 +33,15 @@ public class DatabaseManager {
         }
     }
 
+    static <T> T runSQLCommand(String query, Function<PreparedStatement, T> exec) {
+        try (var db = DatabaseManager.getConnection()) {
+            var command = db.prepareStatement(query, 1);
+            return exec.apply(command);
+        } catch (SQLException e) {
+            throw new DataAccessException("SQL command failed");
+        }
+    }
+
     /**
      * Create a connection to the database and sets the catalog based upon the
      * properties specified in db.properties. Connections to the database should
@@ -50,15 +62,6 @@ public class DatabaseManager {
             return conn;
         } catch (SQLException ex) {
             throw new DataAccessException("failed to get connection", ex);
-        }
-    }
-
-    static <T> T runSQLCommand(String query, Function<PreparedStatement, T> exec) {
-        try (var db = DatabaseManager.getConnection()) {
-            var command = db.prepareStatement(query, 1);
-            return exec.apply(command);
-        } catch (SQLException e) {
-            throw new DataAccessException("SQL command failed");
         }
     }
 

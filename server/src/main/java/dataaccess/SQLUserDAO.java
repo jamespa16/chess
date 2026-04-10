@@ -8,7 +8,7 @@ public class SQLUserDAO implements UserDAO {
     public SQLUserDAO() {
         var query = "CREATE TABLE IF NOT EXISTS UserTable (username VARCHAR(255), password VARCHAR(255), email VARCHAR(255))";
         DatabaseManager.createDatabase();
-        DatabaseManager.runSQLCommand(query, (command)->{
+        DatabaseManager.runSQLCommand(query, (command) -> {
             try {
                 command.executeUpdate();
                 return 0;

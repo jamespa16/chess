@@ -98,6 +98,21 @@ public class PawnMoveTests {
         );
     }
 
+    private static void validatePromotion(String boardText, ChessPosition startingPosition, int[][] endPositions) {
+        var board = TestUtilities.loadBoard(boardText);
+        var testPiece = board.getPiece(startingPosition);
+        Assertions.assertNotNull(testPiece, "Could not find piece on board");
+        var validMoves = new ArrayList<ChessMove>();
+        for (var endPosition : endPositions) {
+            var end = new ChessPosition(endPosition[0], endPosition[1]);
+            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.QUEEN));
+            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.BISHOP));
+            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.ROOK));
+            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.KNIGHT));
+        }
+
+        TestUtilities.validateMoves(board, testPiece, startingPosition, validMoves);
+    }
 
     @Test
     public void edgePromotionBlack() {
@@ -116,7 +131,6 @@ public class PawnMoveTests {
         );
     }
 
-
     @Test
     public void pawnPromotionCapture() {
         validatePromotion("""
@@ -133,7 +147,6 @@ public class PawnMoveTests {
                 new int[][]{{1, 1}, {1, 2}}
         );
     }
-
 
     @Test
     public void pawnAdvanceBlockedWhite() {
@@ -169,7 +182,6 @@ public class PawnMoveTests {
         );
     }
 
-
     @Test
     public void pawnAdvanceBlockedDoubleMoveWhite() {
         TestUtilities.validateMoves("""
@@ -203,7 +215,6 @@ public class PawnMoveTests {
                 new int[][]{}
         );
     }
-
 
     @Test
     public void pawnCaptureWhite() {
@@ -407,23 +418,6 @@ public class PawnMoveTests {
                 new ChessPosition(6, 3),
                 new int[][]{{5, 3}}
         );
-    }
-
-
-    private static void validatePromotion(String boardText, ChessPosition startingPosition, int[][] endPositions) {
-        var board = TestUtilities.loadBoard(boardText);
-        var testPiece = board.getPiece(startingPosition);
-        Assertions.assertNotNull(testPiece, "Could not find piece on board");
-        var validMoves = new ArrayList<ChessMove>();
-        for (var endPosition : endPositions) {
-            var end = new ChessPosition(endPosition[0], endPosition[1]);
-            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.QUEEN));
-            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.BISHOP));
-            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.ROOK));
-            validMoves.add(new ChessMove(startingPosition, end, ChessPiece.PieceType.KNIGHT));
-        }
-
-        TestUtilities.validateMoves(board, testPiece, startingPosition, validMoves);
     }
 
 }

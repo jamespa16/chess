@@ -1,12 +1,10 @@
 package service;
 
+import com.google.gson.JsonSyntaxException;
 import dataaccess.UserDAO;
 import model.LoginRequest;
 import model.UserData;
-
 import org.mindrot.jbcrypt.BCrypt;
-
-import com.google.gson.JsonSyntaxException;
 
 public class UserService {
     private final UserDAO db;
@@ -18,7 +16,7 @@ public class UserService {
     }
 
     public void registerUser(UserData user) {
-        if(db.getUser(user.username()) == null) {
+        if (db.getUser(user.username()) == null) {
             var secureUser = new UserData(user.username(), BCrypt.hashpw(user.password(), BCrypt.gensalt()), user.email());
             db.createUser(secureUser);
         } else {
@@ -27,7 +25,7 @@ public class UserService {
     }
 
     public String loginUser(LoginRequest request) {
-        if(request.username() == null || request.password() == null) {
+        if (request.username() == null || request.password() == null) {
             throw new JsonSyntaxException("");
         }
         UserData match = db.getUser(request.username());

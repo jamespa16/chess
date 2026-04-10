@@ -60,13 +60,28 @@ public class SQLAuthDAO implements AuthDAO {
         getUsername(authToken);
         var query = "DELETE FROM AuthTable WHERE authToken=?";
         DatabaseManager.runSQLCommand(query, (command) -> {
-           try {
-               command.setString(1, authToken);
-               command.executeUpdate();
-               return 0;
-           } catch (SQLException e) {
-               throw new NotAuthorizedError();
-           }
+            try {
+                command.setString(1, authToken);
+                command.executeUpdate();
+                return 0;
+            } catch (SQLException e) {
+                throw new NotAuthorizedError();
+            }
+        });
+    }
+
+    @Override
+    public String getUsername(String authToken) {
+        var query = "SELECT * FROM AuthTable WHERE authToken=?";
+        return DatabaseManager.runSQLCommand(query, (command) -> {
+            try {
+                command.setString(1, authToken);
+                var result = command.executeQuery();
+                result.next();
+                return result.getString("username");
+            } catch (SQLException e) {
+                throw new NotAuthorizedError();
+            }
         });
     }
 
@@ -86,21 +101,6 @@ public class SQLAuthDAO implements AuthDAO {
     @Override
     public boolean verify(String authToken) {
         return this.getUsername(authToken) != null;
-    }
-
-    @Override
-    public String getUsername(String authToken) {
-        var query = "SELECT * FROM AuthTable WHERE authToken=?";
-        return DatabaseManager.runSQLCommand(query, (command) -> {
-            try {
-                command.setString(1, authToken);
-                var result = command.executeQuery();
-                result.next();
-                return result.getString("username");
-            } catch (SQLException e) {
-                throw new NotAuthorizedError();
-            }
-        });
     }
 
 

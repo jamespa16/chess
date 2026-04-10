@@ -26,6 +26,18 @@ public class GameServiceTests {
         assertEquals(1, gameService.newGame(authToken, "game"));
     }
 
+    private GameService setup() {
+        var gameDB = new MemoryGameDAO();
+        return new GameService(gameDB, authService);
+    }
+
+    private String getAuthToken() {
+        var db = new MemoryUserDAO();
+        var userService = new UserService(db, authService);
+        userService.registerUser(user);
+        return userService.loginUser(new LoginRequest(username, password));
+    }
+
     @Test
     void newGameUnauthorizedTest() {
         var gameService = setup();
@@ -106,7 +118,7 @@ public class GameServiceTests {
         var email = "bob@boingo.com";
         var user = new UserData(username, password, email);
         userService.registerUser(user);
-        
+
 
         // setup user two
         var username2 = "dole";
@@ -140,17 +152,5 @@ public class GameServiceTests {
         gameService.clearDatabase();
         var list = gameService.listGames(authToken);
         assertTrue(list.isEmpty());
-    }
-
-    private GameService setup() {
-        var gameDB = new MemoryGameDAO();
-        return new GameService(gameDB, authService);
-    }
-
-    private String getAuthToken() {
-        var db = new MemoryUserDAO();
-        var userService = new UserService(db, authService);
-        userService.registerUser(user);
-        return userService.loginUser(new LoginRequest(username, password));
     }
 }

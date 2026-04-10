@@ -1,9 +1,13 @@
 package passoff.server;
 
-import chess.*;
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
 import org.junit.jupiter.api.*;
 import passoff.model.*;
-import passoff.websocket.*;
+import passoff.websocket.TestCommand;
+import passoff.websocket.TestMessage;
+import passoff.websocket.WebsocketTestingEnvironment;
 import server.Server;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -54,6 +58,29 @@ public class WebSocketTests {
         joinGame(gameID, black, ChessGame.TeamColor.BLACK);
     }
 
+    private WebsocketUser registerUser(String name, String password, String email) {
+        TestAuthResult authResult = serverFacade.register(new TestUser(name, password, email));
+        assertHttpOk(authResult, "registering a new user");
+        return new WebsocketUser(authResult.getUsername(), authResult.getAuthToken());
+    }
+
+    private void assertHttpOk(TestResult result, String context) {
+        Assertions.assertEquals(200, serverFacade.getStatusCode(),
+                String.format("HTTP Status code was not 200 for %s, was %d. Message: %s",
+                        context, serverFacade.getStatusCode(), result.getMessage()));
+    }
+
+    private int createGame(WebsocketUser user, String name) {
+        TestCreateResult createResult = serverFacade.createGame(new TestCreateRequest(name), user.authToken());
+        assertHttpOk(createResult, "creating a new game");
+        return createResult.getGameID();
+    }
+
+    private void joinGame(int gameID, WebsocketUser user, ChessGame.TeamColor color) {
+        TestResult result = serverFacade.joinPlayer(new TestJoinRequest(color, gameID), user.authToken());
+        assertHttpOk(result, "joining a player to a game");
+    }
+
     @AfterEach
     public void tearDown() {
         environment.disconnectAll();
@@ -66,11 +93,108 @@ public class WebSocketTests {
         connectToGame(white, gameID, true, Set.of(), Set.of(), "white player connect");
     }
 
+    private void connectToGame(WebsocketUser sender, int gameID, boolean expectSuccess,
+                               Set<WebsocketUser> inGame, Set<WebsocketUser> otherClients, String description) {
+        TestCommand connectCommand = new TestCommand(UserGameCommand.CommandType.CONNECT, sender.authToken(), gameID);
+        Map<String, Integer> numExpectedMessages = expectedMessages(sender, 1, inGame, (expectSuccess ? 1 : 0), otherClients);
+        Map<String, List<TestMessage>> actualMessages = environment.exchange(sender.username(), connectCommand, numExpectedMessages, waitTime);
+
+        assertCommandMessages(actualMessages, expectSuccess, sender, types(LOAD_GAME), inGame, types(NOTIFICATION), otherClients, description);
+    }
+
+    private Map<String, Integer> expectedMessages(WebsocketUser sender, int senderExpected,
+                                                  Set<WebsocketUser> inGame, int inGameExpected, Set<WebsocketUser> otherClients) {
+        Map<String, Integer> expectedMessages = new HashMap<>();
+        expectedMessages.put(sender.username(), senderExpected);
+        expectedMessages.putAll(inGame.stream().collect(Collectors.toMap(WebsocketUser::username, s -> inGameExpected)));
+        expectedMessages.putAll(otherClients.stream().collect(Collectors.toMap(WebsocketUser::username, s -> 0)));
+        return expectedMessages;
+    }
+
+    private void assertCommandMessages(Map<String, List<TestMessage>> messages, boolean expectSuccess,
+                                       WebsocketUser user, ServerMessage.ServerMessageType[] userExpectedTypes,
+                                       Set<WebsocketUser> inGame, ServerMessage.ServerMessageType[] inGameExpectedTypes,
+                                       Set<WebsocketUser> otherClients, String description) {
+        if (!expectSuccess) {
+            userExpectedTypes = new ServerMessage.ServerMessageType[]{ERROR};
+            inGameExpectedTypes = new ServerMessage.ServerMessageType[0];
+        }
+        assertMessages(user.username(), userExpectedTypes, messages.get(user.username()), description);
+        for (WebsocketUser inGameUser : inGame) {
+            assertMessages(inGameUser.username(), inGameExpectedTypes, messages.get(inGameUser.username()), description);
+        }
+        for (WebsocketUser otherUser : otherClients) {
+            assertMessages(otherUser.username(), new ServerMessage.ServerMessageType[0], messages.get(otherUser.username()), description);
+        }
+    }
+
+    private void assertMessages(String username, ServerMessage.ServerMessageType[] expectedTypes, List<TestMessage> messages, String description) {
+        Assertions.assertEquals(expectedTypes.length, messages.size(), "For command '%s' user '%s' expected %d messages with types %s, got %d: %s"
+                .formatted(description, username, expectedTypes.length, Arrays.toString(expectedTypes), messages.size(), messages));
+        Arrays.sort(expectedTypes);
+        messages.sort(Comparator.comparing(TestMessage::getServerMessageType));
+        try {
+            for (int i = 0; i < expectedTypes.length; i++) {
+                switch (expectedTypes[i]) {
+                    case LOAD_GAME -> assertLoadGame(username, messages.get(i));
+                    case NOTIFICATION -> assertNotification(username, messages.get(i));
+                    case ERROR -> assertError(username, messages.get(i));
+                }
+            }
+        } catch (AssertionError e) {
+            Assertions.fail("\nFor command '%s' user '%s' expected message types matching %s\nGot: %s\nCause: %s"
+                    .formatted(description, username, Arrays.toString(expectedTypes), messages, e.getMessage()), e);
+        }
+    }
+
+    private void assertLoadGame(String username, TestMessage message) {
+        Assertions.assertEquals(ServerMessage.ServerMessageType.LOAD_GAME, message.getServerMessageType(),
+                "Message for %s was not a LOAD_GAME message: %s".formatted(username, message));
+        Assertions.assertNotNull(message.getGame(),
+                "%s's LOAD_GAME message did not contain a game (Make sure it's specifically called 'game')".formatted(username));
+        Assertions.assertNull(message.getMessage(),
+                "%s's LOAD_GAME message contained a message: %s".formatted(username, message.getMessage()));
+        Assertions.assertNull(message.getErrorMessage(),
+                "%s's LOAD_GAME message contained an error message: %s".formatted(username, message.getErrorMessage()));
+    }
+
+    private void assertNotification(String username, TestMessage message) {
+        Assertions.assertEquals(ServerMessage.ServerMessageType.NOTIFICATION, message.getServerMessageType(),
+                "Message for %s was not a NOTIFICATION message: %s".formatted(username, message));
+        Assertions.assertNotNull(message.getMessage(),
+                "%s's NOTIFICATION message did not contain a message (Make sure it's specifically called 'message')".formatted(username));
+        Assertions.assertNull(message.getGame(),
+                "%s's NOTIFICATION message contained a game: %s".formatted(username, message.getGame()));
+        Assertions.assertNull(message.getErrorMessage(),
+                "%s's NOTIFICATION message contained an error message: %s".formatted(username, message.getErrorMessage()));
+    }
+
+    private void assertError(String username, TestMessage message) {
+        Assertions.assertEquals(ServerMessage.ServerMessageType.ERROR, message.getServerMessageType(),
+                "Message for %s was not an ERROR message: %s".formatted(username, message));
+        Assertions.assertNotNull(message.getErrorMessage(),
+                "%s's ERROR message did not contain an error message (Make sure it's specifically called 'errorMessage')".formatted(username));
+        Assertions.assertNull(message.getGame(),
+                "%s's ERROR message contained a game: %s".formatted(username, message.getGame()));
+        Assertions.assertNull(message.getMessage(),
+                "%s's ERROR message contained a non-error message: %s".formatted(username, message.getMessage()));
+    }
+
+    private ServerMessage.ServerMessageType[] types(ServerMessage.ServerMessageType... types) {
+        return types;
+    }
+
     @Test
     @Order(2)
     @DisplayName("Normal Connect")
     public void connectGood() {
         setupNormalGame();    //Connects 3 Users to the game, and notifies others upon connection
+    }
+
+    private void setupNormalGame() {
+        connectToGame(white, gameID, true, Set.of(), Set.of(), "white player connect");
+        connectToGame(black, gameID, true, Set.of(white), Set.of(), "black player connect");
+        connectToGame(observer, gameID, true, Set.of(white, black), Set.of(), "observer connect");
     }
 
     @Test
@@ -96,7 +220,7 @@ public class WebSocketTests {
 
         //make a valid pawn move
         ChessMove move = new ChessMove(new ChessPosition(2, 5), new ChessPosition(3, 5), null);
-        makeMove(white, gameID, move,true, false, Set.of(black, observer), Set.of(), "move made");
+        makeMove(white, gameID, move, true, false, Set.of(black, observer), Set.of(), "move made");
     }
 
     @Test
@@ -263,7 +387,7 @@ public class WebSocketTests {
         joinGame(otherGameID, black2, ChessGame.TeamColor.BLACK);
         connectToGame(white2, otherGameID, true, Set.of(), Set.of(white, black, observer), "connect 1 to other game");
         connectToGame(black2, otherGameID, true, Set.of(white2), Set.of(white, black, observer), "connect 2 to other game");
-        connectToGame(observer2, otherGameID, true,  Set.of(white2, black2), Set.of(white, black, observer), "connect 3 to other game");
+        connectToGame(observer2, otherGameID, true, Set.of(white2, black2), Set.of(white, black, observer), "connect 3 to other game");
 
         //make move in first game - only users in first game should be notified
         ChessMove move = new ChessMove(new ChessPosition(2, 5), new ChessPosition(3, 5), null);
@@ -276,58 +400,19 @@ public class WebSocketTests {
         leave(white, gameID, Set.of(black, observer), Set.of(white2, black2, observer2), "leave from game 1");
     }
 
-    private void setupNormalGame() {
-        connectToGame(white, gameID, true, Set.of(), Set.of(), "white player connect");
-        connectToGame(black, gameID, true, Set.of(white), Set.of(), "black player connect");
-        connectToGame(observer, gameID, true,  Set.of(white, black), Set.of(), "observer connect");
-    }
-
-    private WebsocketUser registerUser(String name, String password, String email) {
-        TestAuthResult authResult = serverFacade.register(new TestUser(name, password, email));
-        assertHttpOk(authResult, "registering a new user");
-        return new WebsocketUser(authResult.getUsername(), authResult.getAuthToken());
-    }
-
-    private int createGame(WebsocketUser user, String name) {
-        TestCreateResult createResult = serverFacade.createGame(new TestCreateRequest(name), user.authToken());
-        assertHttpOk(createResult, "creating a new game");
-        return createResult.getGameID();
-    }
-
-    private void joinGame(int gameID, WebsocketUser user, ChessGame.TeamColor color) {
-        TestResult result = serverFacade.joinPlayer(new TestJoinRequest(color, gameID), user.authToken());
-        assertHttpOk(result, "joining a player to a game");
-    }
-
-    private void assertHttpOk(TestResult result, String context) {
-        Assertions.assertEquals(200, serverFacade.getStatusCode(),
-                String.format("HTTP Status code was not 200 for %s, was %d. Message: %s",
-                        context, serverFacade.getStatusCode(), result.getMessage()));
-    }
-
-    private void connectToGame(WebsocketUser sender, int gameID, boolean expectSuccess,
-                               Set<WebsocketUser> inGame, Set<WebsocketUser> otherClients, String description) {
-        TestCommand connectCommand = new TestCommand(UserGameCommand.CommandType.CONNECT, sender.authToken(), gameID);
-        Map<String, Integer> numExpectedMessages = expectedMessages(sender, 1, inGame, (expectSuccess ? 1 : 0), otherClients);
-        Map<String, List<TestMessage>> actualMessages = environment.exchange(sender.username(), connectCommand, numExpectedMessages, waitTime);
-
-        assertCommandMessages(actualMessages, expectSuccess, sender, types(LOAD_GAME), inGame, types(NOTIFICATION), otherClients, description);
-    }
-
     private void makeMove(WebsocketUser sender, int gameID, ChessMove move, boolean expectSuccess, boolean extraNotification,
                           Set<WebsocketUser> inGame, Set<WebsocketUser> otherClients, String description) {
         TestCommand moveCommand = new TestCommand(sender.authToken(), gameID, move);
         int numExtraNotification = extraNotification ? 1 : 0;
         int senderExpected = 1 + numExtraNotification;
-        int inGameExpected = (expectSuccess ? 2  + numExtraNotification : 0);
+        int inGameExpected = (expectSuccess ? 2 + numExtraNotification : 0);
         Map<String, Integer> numExpectedMessages = expectedMessages(sender, senderExpected, inGame, inGameExpected, otherClients);
         Map<String, List<TestMessage>> actualMessages = environment.exchange(sender.username(), moveCommand, numExpectedMessages, waitTime);
 
-        if(extraNotification) {
+        if (extraNotification) {
             assertCommandMessages(actualMessages, expectSuccess, sender, types(LOAD_GAME, NOTIFICATION),
                     inGame, types(LOAD_GAME, NOTIFICATION, NOTIFICATION), otherClients, description);
-        }
-        else {
+        } else {
             assertCommandMessages(actualMessages, expectSuccess, sender, types(LOAD_GAME),
                     inGame, types(LOAD_GAME, NOTIFICATION), otherClients, description);
         }
@@ -351,87 +436,6 @@ public class WebSocketTests {
         assertCommandMessages(actualMessages, true, sender, types(), inGame, types(NOTIFICATION), otherClients, description);
     }
 
-    private Map<String, Integer> expectedMessages(WebsocketUser sender, int senderExpected,
-                                                  Set<WebsocketUser> inGame, int inGameExpected, Set<WebsocketUser> otherClients) {
-        Map<String, Integer> expectedMessages = new HashMap<>();
-        expectedMessages.put(sender.username(), senderExpected);
-        expectedMessages.putAll(inGame.stream().collect(Collectors.toMap(WebsocketUser::username, s -> inGameExpected)));
-        expectedMessages.putAll(otherClients.stream().collect(Collectors.toMap(WebsocketUser::username, s -> 0)));
-        return expectedMessages;
+    private record WebsocketUser(String username, String authToken) {
     }
-
-    private void assertCommandMessages(Map<String, List<TestMessage>> messages, boolean expectSuccess,
-                                       WebsocketUser user, ServerMessage.ServerMessageType[] userExpectedTypes,
-                                       Set<WebsocketUser> inGame, ServerMessage.ServerMessageType[] inGameExpectedTypes,
-                                       Set<WebsocketUser> otherClients, String description) {
-        if(!expectSuccess) {
-            userExpectedTypes = new ServerMessage.ServerMessageType[]{ERROR};
-            inGameExpectedTypes = new ServerMessage.ServerMessageType[0];
-        }
-        assertMessages(user.username(), userExpectedTypes, messages.get(user.username()), description);
-        for(WebsocketUser inGameUser : inGame) {
-            assertMessages(inGameUser.username(), inGameExpectedTypes, messages.get(inGameUser.username()), description);
-        }
-        for(WebsocketUser otherUser : otherClients) {
-            assertMessages(otherUser.username(), new ServerMessage.ServerMessageType[0], messages.get(otherUser.username()), description);
-        }
-    }
-
-    private void assertMessages(String username, ServerMessage.ServerMessageType[] expectedTypes, List<TestMessage> messages, String description) {
-        Assertions.assertEquals(expectedTypes.length, messages.size(), "For command '%s' user '%s' expected %d messages with types %s, got %d: %s"
-                .formatted(description, username, expectedTypes.length, Arrays.toString(expectedTypes), messages.size(), messages));
-        Arrays.sort(expectedTypes);
-        messages.sort(Comparator.comparing(TestMessage::getServerMessageType));
-        try {
-            for(int i = 0; i < expectedTypes.length; i++) {
-                switch (expectedTypes[i]) {
-                    case LOAD_GAME -> assertLoadGame(username, messages.get(i));
-                    case NOTIFICATION -> assertNotification(username, messages.get(i));
-                    case ERROR -> assertError(username, messages.get(i));
-                }
-            }
-        } catch(AssertionError e) {
-            Assertions.fail("\nFor command '%s' user '%s' expected message types matching %s\nGot: %s\nCause: %s"
-                    .formatted(description, username, Arrays.toString(expectedTypes), messages, e.getMessage()), e);
-        }
-    }
-
-    private void assertLoadGame(String username, TestMessage message) {
-        Assertions.assertEquals(ServerMessage.ServerMessageType.LOAD_GAME, message.getServerMessageType(),
-                "Message for %s was not a LOAD_GAME message: %s".formatted(username, message));
-        Assertions.assertNotNull(message.getGame(),
-                "%s's LOAD_GAME message did not contain a game (Make sure it's specifically called 'game')".formatted(username));
-        Assertions.assertNull(message.getMessage(),
-                "%s's LOAD_GAME message contained a message: %s".formatted(username, message.getMessage()));
-        Assertions.assertNull(message.getErrorMessage(),
-                "%s's LOAD_GAME message contained an error message: %s".formatted(username, message.getErrorMessage()));
-    }
-
-    private void assertNotification(String username, TestMessage message) {
-        Assertions.assertEquals(ServerMessage.ServerMessageType.NOTIFICATION, message.getServerMessageType(),
-                "Message for %s was not a NOTIFICATION message: %s".formatted(username, message));
-        Assertions.assertNotNull(message.getMessage(),
-                "%s's NOTIFICATION message did not contain a message (Make sure it's specifically called 'message')".formatted(username));
-        Assertions.assertNull(message.getGame(),
-                "%s's NOTIFICATION message contained a game: %s".formatted(username, message.getGame()));
-        Assertions.assertNull(message.getErrorMessage(),
-                "%s's NOTIFICATION message contained an error message: %s".formatted(username, message.getErrorMessage()));
-    }
-
-    private void assertError(String username, TestMessage message) {
-        Assertions.assertEquals(ServerMessage.ServerMessageType.ERROR, message.getServerMessageType(),
-                "Message for %s was not an ERROR message: %s".formatted(username, message));
-        Assertions.assertNotNull(message.getErrorMessage(),
-                "%s's ERROR message did not contain an error message (Make sure it's specifically called 'errorMessage')".formatted(username));
-        Assertions.assertNull(message.getGame(),
-                "%s's ERROR message contained a game: %s".formatted(username, message.getGame()));
-        Assertions.assertNull(message.getMessage(),
-                "%s's ERROR message contained a non-error message: %s".formatted(username, message.getMessage()));
-    }
-
-    private ServerMessage.ServerMessageType[] types(ServerMessage.ServerMessageType... types) {
-        return types;
-    }
-
-    private record WebsocketUser(String username, String authToken) { }
 }

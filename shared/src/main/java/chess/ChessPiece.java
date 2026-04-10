@@ -1,10 +1,6 @@
 package chess;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a single chess piece
@@ -19,32 +15,6 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         color = pieceColor;
         this.type = type;
-    }
-
-    /**
-     * The various different chess piece options
-     */
-    public enum PieceType {
-        KING,
-        QUEEN,
-        BISHOP,
-        KNIGHT,
-        ROOK,
-        PAWN
-    }
-
-    /**
-     * @return Which team this chess piece belongs to
-     */
-    public ChessGame.TeamColor getTeamColor() {
-        return color;
-    }
-
-    /**
-     * @return which type of chess piece this piece is
-     */
-    public PieceType getPieceType() {
-        return type;
     }
 
     /**
@@ -122,8 +92,8 @@ public class ChessPiece {
                 }
             }
         }
-        
-        ChessPosition[] attackPositions = {new ChessPosition(y+direction, x+1), new ChessPosition(y+direction, x-1)};
+
+        ChessPosition[] attackPositions = {new ChessPosition(y + direction, x + 1), new ChessPosition(y + direction, x - 1)};
         for (ChessPosition attack : attackPositions) {
             ChessPiece potentialAttack = board.getPiece(attack);
             if (potentialAttack != null && potentialAttack.color != this.color) {
@@ -171,7 +141,7 @@ public class ChessPiece {
     private void kingMovement(ChessBoard board, int x, int y, List<ChessPosition> newPos) {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
-                ChessPosition potential = new ChessPosition(y+j, x+i);
+                ChessPosition potential = new ChessPosition(y + j, x + i);
                 if (potential.getColumn() < 9 && potential.getColumn() > 0 && potential.getRow() < 9 && potential.getRow() > 0) {
                     ChessPiece obstacle = board.getPiece(potential);
                     if (obstacle == null || obstacle.getTeamColor() != color) {
@@ -202,23 +172,23 @@ public class ChessPiece {
         boolean right = true;
 
         for (int i = 1; i < 9; i++) {
-            if (x+i < 9 && up) {
+            if (x + i < 9 && up) {
                 ChessPosition potential = new ChessPosition(y, x + i);
                 up = isUnobstructed(board, newPos, up, potential);
             }
 
-            if (x-i > 0 && down) {
+            if (x - i > 0 && down) {
                 ChessPosition potential = new ChessPosition(y, x - i);
                 down = isUnobstructed(board, newPos, down, potential);
             }
 
-            if (y+i < 9 && right) {
-                ChessPosition potential = new ChessPosition(y+i, x);
+            if (y + i < 9 && right) {
+                ChessPosition potential = new ChessPosition(y + i, x);
                 right = isUnobstructed(board, newPos, right, potential);
             }
 
-            if (y-i > 0 && left) {
-                ChessPosition potential = new ChessPosition(y-i, x);
+            if (y - i > 0 && left) {
+                ChessPosition potential = new ChessPosition(y - i, x);
                 left = isUnobstructed(board, newPos, left, potential);
             }
         }
@@ -230,24 +200,24 @@ public class ChessPiece {
         boolean downLeft = true;
         boolean downRight = true;
 
-        for(int i = 1; i < 9; i++) {
-            if(i + x < 9 && i + y < 9 && upRight) {
-                ChessPosition potential = new ChessPosition(y+i, x+i);
+        for (int i = 1; i < 9; i++) {
+            if (i + x < 9 && i + y < 9 && upRight) {
+                ChessPosition potential = new ChessPosition(y + i, x + i);
                 upRight = isUnobstructed(board, newPos, upRight, potential);
             }
 
-            if(i + x < 9 && y - i > 0 && downRight) {
-                ChessPosition potential = new ChessPosition(y-i, x+i);
+            if (i + x < 9 && y - i > 0 && downRight) {
+                ChessPosition potential = new ChessPosition(y - i, x + i);
                 downRight = isUnobstructed(board, newPos, downRight, potential);
             }
 
-            if(x - i > 0 && i + y < 9 && upLeft) {
-                ChessPosition potential = new ChessPosition(y+i, x-i);
+            if (x - i > 0 && i + y < 9 && upLeft) {
+                ChessPosition potential = new ChessPosition(y + i, x - i);
                 upLeft = isUnobstructed(board, newPos, upLeft, potential);
             }
 
-            if(x - i > 0 && y - i > 0 && downLeft) {
-                ChessPosition potential = new ChessPosition(y-i, x-i);
+            if (x - i > 0 && y - i > 0 && downLeft) {
+                ChessPosition potential = new ChessPosition(y - i, x - i);
                 downLeft = isUnobstructed(board, newPos, downLeft, potential);
             }
         }
@@ -261,8 +231,34 @@ public class ChessPiece {
         return false;
     }
 
+    /**
+     * @return Which team this chess piece belongs to
+     */
+    public ChessGame.TeamColor getTeamColor() {
+        return color;
+    }
+
+    /**
+     * @return which type of chess piece this piece is
+     */
+    public PieceType getPieceType() {
+        return type;
+    }
+
     @Override
     public int hashCode() {
         return getPieceType().hashCode() + getTeamColor().hashCode();
+    }
+
+    /**
+     * The various different chess piece options
+     */
+    public enum PieceType {
+        KING,
+        QUEEN,
+        BISHOP,
+        KNIGHT,
+        ROOK,
+        PAWN
     }
 }

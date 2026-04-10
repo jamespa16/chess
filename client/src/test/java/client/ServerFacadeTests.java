@@ -1,21 +1,21 @@
 package client;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import chess.ChessGame;
 import network.ServerFacade;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import server.Server;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class ServerFacadeTests {
 
+    private static final String username = "bob";
+    private static final String password = "1234";
+    private static final String email = "bob@boing.blob";
     private static Server server;
-    private static String username = "bob";
-    private static String password = "1234";
-    private static String email = "bob@boing.blob";
     private static String url = "http://localhost";
 
     @BeforeAll
@@ -34,13 +34,13 @@ public class ServerFacadeTests {
     @Test
     public void registerTest() {
         var facade = new ServerFacade(url);
-        
+
         assertDoesNotThrow(() -> {
             facade.deleteDB();
             facade.register(username, email, password);
         });
     }
- 
+
     @Test
     public void loginTest() {
         var facade = new ServerFacade(url);
@@ -123,7 +123,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void logoutNotInSessionTest(){
+    public void logoutNotInSessionTest() {
         var facade = new ServerFacade(url);
         assertThrows(Exception.class, () -> {
             facade.deleteDB();
@@ -132,7 +132,7 @@ public class ServerFacadeTests {
     }
 
     @Test
-    public void createGameNoAuthTest(){
+    public void createGameNoAuthTest() {
         var facade = new ServerFacade(url);
         assertThrows(Exception.class, () -> {
             facade.deleteDB();

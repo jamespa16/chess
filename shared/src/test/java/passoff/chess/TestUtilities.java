@@ -9,6 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 public class TestUtilities {
+    private static final Map<Character, ChessPiece.PieceType> CHAR_TO_TYPE_MAP = Map.of(
+            'p', ChessPiece.PieceType.PAWN,
+            'n', ChessPiece.PieceType.KNIGHT,
+            'r', ChessPiece.PieceType.ROOK,
+            'q', ChessPiece.PieceType.QUEEN,
+            'k', ChessPiece.PieceType.KING,
+            'b', ChessPiece.PieceType.BISHOP);
+
     public static void validateMoves(String boardText, ChessPosition startPosition, int[][] endPositions) {
         var board = loadBoard(boardText);
         var testPiece = board.getPiece(startPosition);
@@ -32,14 +40,14 @@ public class TestUtilities {
         Assertions.assertEquals(expected, actual, "Wrong moves");
     }
 
+    private static int moveToInt(ChessMove move) {
+        return 1000 * positionToInt(move.getStartPosition()) + 10 * positionToInt(move.getEndPosition()) +
+                ((move.getPromotionPiece() != null) ? move.getPromotionPiece().ordinal() + 1 : 0);
+    }
 
-    private static final Map<Character, ChessPiece.PieceType> CHAR_TO_TYPE_MAP = Map.of(
-            'p', ChessPiece.PieceType.PAWN,
-            'n', ChessPiece.PieceType.KNIGHT,
-            'r', ChessPiece.PieceType.ROOK,
-            'q', ChessPiece.PieceType.QUEEN,
-            'k', ChessPiece.PieceType.KING,
-            'b', ChessPiece.PieceType.BISHOP);
+    private static int positionToInt(ChessPosition position) {
+        return 10 * position.getRow() + position.getColumn();
+    }
 
     public static ChessBoard loadBoard(String boardText) {
         var board = new ChessBoard();
@@ -68,6 +76,15 @@ public class TestUtilities {
         return board;
     }
 
+    public static List<ChessMove> loadMoves(ChessPosition startPosition, int[][] endPositions) {
+        var validMoves = new ArrayList<ChessMove>();
+        for (var endPosition : endPositions) {
+            validMoves.add(new ChessMove(startPosition,
+                    new ChessPosition(endPosition[0], endPosition[1]), null));
+        }
+        return validMoves;
+    }
+
     public static ChessBoard defaultBoard() {
         return loadBoard("""
                 |r|n|b|q|k|b|n|r|
@@ -79,23 +96,5 @@ public class TestUtilities {
                 |P|P|P|P|P|P|P|P|
                 |R|N|B|Q|K|B|N|R|
                 """);
-    }
-
-    public static List<ChessMove> loadMoves(ChessPosition startPosition, int[][] endPositions) {
-        var validMoves = new ArrayList<ChessMove>();
-        for (var endPosition : endPositions) {
-            validMoves.add(new ChessMove(startPosition,
-                    new ChessPosition(endPosition[0], endPosition[1]), null));
-        }
-        return validMoves;
-    }
-
-    private static int positionToInt(ChessPosition position) {
-        return 10 * position.getRow() + position.getColumn();
-    }
-
-    private static int moveToInt(ChessMove move) {
-        return 1000 * positionToInt(move.getStartPosition()) + 10 * positionToInt(move.getEndPosition()) +
-                ((move.getPromotionPiece() != null) ? move.getPromotionPiece().ordinal() + 1 : 0);
     }
 }
