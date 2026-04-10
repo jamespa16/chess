@@ -121,10 +121,6 @@ public class ServerFacade {
         httpRequestHelper("/db", (req) -> req.DELETE());
     }
 
-    public GameSocket getSocket() throws Exception {
-        return new GameSocket(url + "/ws");
-    }
-
     private String httpRequestHelper(String endpoint, Function<Builder, Builder> details) throws Exception {
         var request = details.apply(HttpRequest.newBuilder()
                 .uri(new URI(url + endpoint))

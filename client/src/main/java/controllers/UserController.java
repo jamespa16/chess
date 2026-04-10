@@ -128,9 +128,9 @@ public class UserController {
 
 				HttpHelper.serverRequestHandler(() -> connection.joinGame(session.authToken(), selectedGame.gameID(), color));
 			}
-			return new ClientGameRequest(color, selectedGame.gameName());
+			return new ClientGameRequest(color, selectedGame.gameName(), id);
 		}
-		return new ClientGameRequest(WHITE, selectedGame.gameName());
+		return new ClientGameRequest(WHITE, selectedGame.gameName(), id);
 	}
 
 	private int selectGame() {

@@ -2,6 +2,7 @@ package server;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -17,10 +18,13 @@ import websocket.UserConnection;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
 import static chess.ChessGame.TeamColor.BLACK;
@@ -37,6 +41,7 @@ public class Server {
     private final UserService userService;
     private final GameDAO gameDB;
     private final GameService gameService;
+    Collection<WsContext> connections;
     Map<String, UserConnection> sessions;
 
     public Server() {
@@ -47,6 +52,7 @@ public class Server {
         gameDB = new SQLGameDAO();
         gameService = new GameService(gameDB, authService);
         sessions = new ConcurrentHashMap<>();
+        connections = new ArrayList<>();
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
                 .post("/user", this::registerUser)
@@ -56,7 +62,37 @@ public class Server {
                 .post("/game", this::newGame)
                 .put("/game", this::joinGame)
                 .delete("/db", this::clearDatabase)
-                .ws("/ws", this::gameSocket);
+                .ws("/ws", (socket) -> {
+                    socket.onConnect(ctx -> {
+                        ctx.enableAutomaticPings();
+                        System.out.println("CONNECTION MADE " + ctx.sessionId());
+                        connections.add(ctx);
+                    });
+
+                    socket.onMessage(ctx -> {
+                        System.out.println("MESSAGE RECIEVED " + ctx.sessionId() + " " + ctx.message());
+                        var message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
+                        switch (message.getCommandType()) {
+                            case CONNECT:
+                                socketConnect(ctx, message);
+                                break;
+                            case LEAVE:
+                                socketLeave(message);
+                                break;
+                            case MAKE_MOVE:
+                                socketMove(ctx, message);
+                                break;
+                            case RESIGN:
+                                socketResign(ctx, message);
+                                break;
+                        }
+                    });
+
+                    socket.onClose(ctx -> {
+                        System.out.println("SESSION CLOSED " + ctx.sessionId());
+                        connections.remove(ctx);
+                    });
+                });
     }
 
     public int run(int desiredPort) {
@@ -141,101 +177,101 @@ public class Server {
         });
     }
 
-    public void gameSocket(WsConfig socket) {
-        socket.onConnect(ctx -> {
-            ctx.enableAutomaticPings();
-            var connect = new Gson().fromJson(ctx.queryString(), UserGameCommand.class);
-            // look at all joined games. check if AUTH TOKEN is attached to any of them. if so PLAYER, else OBSERVER
-            socketConnect(ctx, connect);
-        });
-
-        socket.onMessage(ctx -> {
-            var message = new Gson().fromJson(ctx.message(), UserGameCommand.class);
-            switch (message.getCommandType()) {
-                case CONNECT:
-                    socketConnect(ctx, message);
-                    break;
-                case LEAVE:
-                    break;
-                case MAKE_MOVE:
-                    socketMove(message);
-                    break;
-                case RESIGN:
-                    socketResign(message);
-                    break;
-            }
-        });
-
-        socket.onClose(ctx -> {});
-    }
-
     private void socketConnect(WsContext ctx, UserGameCommand connect) {
-        var auth = connect.getAuthToken();
-        var user = authService.getUsername(auth);
-        var gameID = connect.getGameID();
+        try {
+            var auth = connect.getAuthToken();
+            var user = authService.getUsername(auth);
+            var gameID = connect.getGameID();
 
-        var activeGames = gameService.listGames(auth);
-        for (GameData game : activeGames) {
-            if (game.gameID() == gameID) {
-                var color = WHITE;
-                var message = "white";
-                if (game.blackUsername().equals(user)){
-                    color = BLACK;
-                    message = "black";
+            var activeGames = gameService.listGames(auth);
+            var validGame = false;
+            for (GameData game : activeGames) {
+                if (game.gameID() == gameID) {
+                    validGame = true;
+                    var color = WHITE;
+                    var message = "white";
+                    if (game.blackUsername().equals(user)) {
+                        color = BLACK;
+                        message = "black";
+                    }
+                    System.out.println("notifying others...");
+                    notifyClients(gameID, new ServerMessage(NOTIFICATION, message + " is now " + user), null);
+                    System.out.println("adding client to game...");
+                    sessions.put(auth, new UserConnection(auth, user, gameID, PLAYER, ctx));
+                    System.out.println("loading game on client...");
+                    var load = new ServerMessage(LOAD_GAME, null, game.game());
+                    ctx.send(new Gson().toJson(load));
+                    return;
                 }
-                sessions.put(auth, new UserConnection(auth, user, gameID, PLAYER, ctx));
-                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " joined as " + message));
-                return;
             }
+            if (validGame) {
+                sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
+                notifyClients(gameID, new ServerMessage(NOTIFICATION, user + "joined as an observer!"), null);
+            } else {
+                sendError(ctx,"Error: Invalid Game ID");
+            }
+        } catch (Exception e) {
+            sendError(ctx, "Connection Error: " + e.getMessage());
         }
-        sessions.put(auth, new UserConnection(auth, user, gameID, OBSERVER, ctx));
-        notifyClients(gameID, new ServerMessage(NOTIFICATION, user + "joined as an observer!"));
     }
+
 
     private void socketLeave(UserGameCommand command) {
         var user = authService.getUsername(command.getAuthToken());
-        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " has left"));
+        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " has left"), null);
         sessions.remove(command.getAuthToken());
     }
 
-    private void socketMove(UserGameCommand command) {
+    private void socketMove(WsContext ctx, UserGameCommand command) {
         var auth = command.getAuthToken();
-        var user = authService.getUsername(auth);
         var gameID = command.getGameID();
-        var move = new Gson().fromJson(command.getMove(), ChessMove.class);
+
         try {
-            var result = gameService.makeMove(auth, gameID, move);
-            var message = user + "moved " + move.toString();
+            System.out.println("computing move");
+            var user = authService.getUsername(auth);
+            var result = gameService.makeMove(auth, gameID, command.getMove());
+            var message = user + "moved " + command.getMove().toString();
             if (result != null) {
                 message += "resulting in " + result;
             }
-            sendGame(gameID, message, gameService.getGame(auth, gameID));
+            System.out.println("broadcasting move ...");
+            var content = new ServerMessage(LOAD_GAME, null, gameService.getGame(auth, gameID));
+            notifyClients(gameID, content, null);
+            notifyClients(gameID, new ServerMessage(NOTIFICATION, user + " moved"), auth);
         } catch (NotAuthorizedError e) {
-            sessions.get(auth)
-                    .connection()
-                    .send(new ServerMessage(ERROR, user + "is not part of this game!"));
+            sendError(ctx, "you are not part of this game!");
+        } catch (InvalidMoveException e) {
+            sendError(ctx, "that move is invalid");
         }
     }
 
-    private void socketResign(UserGameCommand command) {
+    private void socketResign(WsContext ctx, UserGameCommand command) {
         var auth = command.getAuthToken();
         var user = authService.getUsername(auth);
-        notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + "resigned!"));
-        var stale = sessions.remove(auth);
-        stale.connection().closeSession();
+        System.out.println("resigning " + user);
+        if (sessions.get(auth).type() == OBSERVER) {
+            sendError(ctx, "you can't resign");
+        } else {
+            notifyClients(command.getGameID(), new ServerMessage(NOTIFICATION, user + " resigned!"), null);
+            var stale = sessions.remove(auth);
+            gameService.resign(auth, stale.gameID());
+            stale.connection().closeSession();
+        }
     }
 
-    private void sendGame(int gameID, String message, ChessGame game) {
-        var content = new ServerMessage(LOAD_GAME, message, game);
-        notifyClients(gameID, content);
-    }
-
-    private void notifyClients(int gameID, ServerMessage message) {
+    private void notifyClients(int gameID, ServerMessage message, String except) {
         sessions.forEach((auth, session) -> {
-            if (session.gameID() == gameID) {
+            var exclude = false;
+            if (except != null) exclude = session.auth().equals(except) ;
+            if (!exclude && session.gameID() == gameID && connections.contains(session.connection())) {
+                System.out.println("sending to " + session.username() + " @ " + session.connection().sessionId());
                 session.connection().send(new Gson().toJson(message));
             }
         });
+    }
+
+    private void sendError(WsContext ctx, String msg) {
+        ctx.send(new Gson().toJson(new ServerMessage(ERROR, msg)));
     }
 
     // All in one error handler function

@@ -13,6 +13,7 @@ import chess.ChessGame;
 public class ServerMessage {
     public ServerMessageType serverMessageType;
     public String message;
+    public String errorMessage;
     public ChessGame game = null; 
 
     public enum ServerMessageType {
@@ -23,7 +24,11 @@ public class ServerMessage {
 
     public ServerMessage(ServerMessageType type, String message) {
         this.serverMessageType = type;
-        this.message = message;
+        if (type == ServerMessageType.ERROR) {
+            errorMessage = message;
+        } else {
+            this.message = message;
+        }
     }
 
     public ServerMessage(ServerMessageType type, String message, ChessGame game) {

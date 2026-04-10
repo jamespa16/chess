@@ -11,23 +11,34 @@ import websocket.messages.ServerMessage;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static chess.ChessGame.TeamColor.*;
+import static websocket.commands.UserGameCommand.CommandType.CONNECT;
 
 @ClientEndpoint
 public class GameSocket {
     private ChessGame game = null;
-    private ArrayList<Notification> notifications = new ArrayList<>();
-    Session session;
+    private Collection<Notification> notifications = new ArrayList<>();
+    String auth;
+    int gameID;
 
-    public GameSocket(String url) throws Exception {
-        this.session = ContainerProvider
-                .getWebSocketContainer()
-                .connectToServer(this, URI.create(url));
+
+    public GameSocket(String url, String authToken, int gameID) throws Exception {
+        this.auth = authToken;
+        this.gameID = gameID;
     }
 
     @OnOpen
-    public void open() {}
+    public void open(Session session) {
+        try {
+            send(session, new UserGameCommand(CONNECT, auth, gameID));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        this.game = getGame();
+        this.notifications = getNotifications();
+    }
 
     @OnMessage
     public void receive(String ctx) {
@@ -45,15 +56,15 @@ public class GameSocket {
         }
     }
 
-    public void send(UserGameCommand command) {}
+    public void send(Session session, UserGameCommand command) throws Exception {
+        session.getBasicRemote().sendText(new Gson().toJson(command));
+    }
 
     @OnClose
     public void close() {}
 
     public ChessGame getGame() { return game; }
 
-    public Notification[] getNotifications() { return (Notification[]) notifications.toArray(); }
-
-    public void makeMove(ChessMove move) {}
+    public Collection<Notification> getNotifications() { return notifications; }
 
 }

@@ -17,7 +17,7 @@ public class UserGameCommand {
     private final CommandType commandType;
     private final String authToken;
     private final Integer gameID;
-    private String move = null;
+    private ChessMove move = null;
 
     public UserGameCommand(CommandType commandType, String authToken, Integer gameID) {
         this.commandType = commandType;
@@ -25,7 +25,14 @@ public class UserGameCommand {
         this.gameID = gameID;
     }
 
-    public String getMove() {
+    public UserGameCommand(CommandType commandType, String authToken, Integer gameID, ChessMove move) {
+        this.commandType = commandType;
+        this.authToken = authToken;
+        this.gameID = gameID;
+        this.move = move;
+    }
+
+    public ChessMove getMove() {
         return move;
     }
 
@@ -49,7 +56,7 @@ public class UserGameCommand {
     }
 
     public void setMove(ChessMove move) {
-        this.move = new Gson().toJson(move);
+        this.move = move;
     }
 
     @Override

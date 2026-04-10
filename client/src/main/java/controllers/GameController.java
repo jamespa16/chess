@@ -4,12 +4,15 @@ import RenderEngine.RenderEngine;
 import chess.ChessGame.TeamColor;
 import chess.ChessMove;
 import chess.ChessPosition;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.Session;
 import model.AuthData;
 import model.GameData;
 import network.GameSocket;
 import network.ServerFacade;
 import websocket.commands.UserGameCommand;
 
+import java.net.URI;
 import java.util.Scanner;
 
 import static websocket.commands.UserGameCommand.CommandType.*;
@@ -17,19 +20,28 @@ import static websocket.commands.UserGameCommand.CommandType.*;
 public class GameController {
 	private Scanner scanner;
 	private GameSocket connection;
+	private Session session;
 
-	public GameController(GameSocket connection) {
-		this.connection = connection;
+	public GameController(GameSocket socket, String url) throws Exception{
+		this.connection = socket;
+		var container = ContainerProvider
+				.getWebSocketContainer();
+		this.session = container.connectToServer(GameSocket.class, URI.create(url));
+		this.scanner = new Scanner(System.in);
 	}
 
 	public void gameScreen(TeamColor perspective, String name) {
 		var engine = new RenderEngine();
 
 		while (true) {
-			engine.updateGame(connection.getGame());
-			engine.updateNotifications(connection.getNotifications());
-			engine.render(perspective, name);
+			var game = connection.getGame();
+			if (game != null) {
+				engine.updateGame(connection.getGame());
+				engine.updateNotifications(connection.getNotifications());
+				engine.render(perspective);
+			}
 
+			System.out.printf("[ "+name+" ] game control >> ");
 			var command = scanner.nextLine().trim();
 			switch (command) {
 				case "help":

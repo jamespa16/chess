@@ -8,6 +8,7 @@ import model.GameData;
 import model.Notification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class RenderEngine {
     private ChessGame game = null;
@@ -21,7 +22,7 @@ public class RenderEngine {
 
     public RenderEngine() {}
 
-    public void render(TeamColor color, String name) {
+    public void render(TeamColor color) {
         String[][] buffer = new String[height][width];
 
         renderFrame(buffer);
@@ -33,15 +34,13 @@ public class RenderEngine {
                 System.out.print(buffer[i][j]);
             }
         }
-
-        System.out.printf("[ "+name+" ] game control >>");
     }
 
     public void updateGame(ChessGame game) {
         this.game = game;
     }
 
-    public void updateNotifications(Notification[] notifications) {
+    public void updateNotifications(Collection<Notification> notifications) {
         for (Notification notification : notifications) {
             if (!this.notifications.contains(notification)) this.notifications.add(notification);
         }
