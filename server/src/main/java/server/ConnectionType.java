@@ -1,4 +1,4 @@
-package websocket;
+package server;
 
 public enum ConnectionType {
     PLAYER,

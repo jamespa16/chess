@@ -1,7 +1,5 @@
 package server;
 
-import chess.ChessGame;
-import chess.ChessMove;
 import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -9,24 +7,19 @@ import com.google.gson.JsonSyntaxException;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
-import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsContext;
 import model.*;
-import org.eclipse.jetty.server.Authentication;
 import service.*;
-import websocket.UserConnection;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Consumer;
 
 import static chess.ChessGame.TeamColor.BLACK;
 import static chess.ChessGame.TeamColor.WHITE;
-import static websocket.ConnectionType.*;
+import static server.ConnectionType.*;
 import static websocket.messages.ServerMessage.ServerMessageType.*;
 
 public class Server {
