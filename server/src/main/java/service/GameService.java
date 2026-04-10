@@ -3,6 +3,7 @@ package service;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.InvalidMoveException;
+import com.google.gson.JsonSyntaxException;
 import dataaccess.GameDAO;
 import model.GameData;
 import model.JoinRequest;
@@ -11,8 +12,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import com.google.gson.JsonSyntaxException;
-
 import static chess.ChessGame.TeamColor.BLACK;
 import static chess.ChessGame.TeamColor.WHITE;
 
@@ -20,7 +19,7 @@ public class GameService {
     private final GameDAO db;
     private final AuthService authService;
 
-    public GameService(GameDAO db, AuthService authService){
+    public GameService(GameDAO db, AuthService authService) {
         this.db = db;
         this.authService = authService;
     }
@@ -30,7 +29,9 @@ public class GameService {
     }
 
     public int newGame(String authToken, String gameName) {
-        return secure(authToken, () -> {return db.createGame(gameName);});
+        return secure(authToken, () -> {
+            return db.createGame(gameName);
+        });
     }
 
     public void joinGame(String authToken, JoinRequest joinRequest, String user) {
@@ -89,10 +90,15 @@ public class GameService {
             var pieceColor = game.getBoard().getPiece(move.getStartPosition()).getTeamColor();
             ChessGame.TeamColor userColor = null;
 
-            if (Objects.equals(user, white)) userColor = WHITE;
-            else if (Objects.equals(user, black)) userColor = BLACK;
+            if (Objects.equals(user, white)) {
+                userColor = WHITE;
+            } else if (Objects.equals(user, black)) {
+                userColor = BLACK;
+            }
 
-            if (userColor == null || pieceColor != userColor) return "invalid";
+            if (userColor == null || pieceColor != userColor) {
+                return "invalid";
+            }
 
 
             try {
@@ -124,7 +130,7 @@ public class GameService {
             return result;
         });
 
-        if (moveResult != null && moveResult.equals("invalid")){
+        if (moveResult != null && moveResult.equals("invalid")) {
             throw new InvalidMoveException();
         } else {
             return moveResult;
@@ -140,7 +146,7 @@ public class GameService {
     }
 
     public void resign(String auth, int gameID) {
-         secure(auth, () -> {
+        secure(auth, () -> {
             var gameData = db.getGame(gameID);
             var user = authService.getUsername(auth);
             if (Objects.equals(gameData.whiteUsername(), user)) {

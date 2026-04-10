@@ -3,9 +3,7 @@ package network;
 import com.google.gson.Gson;
 import controllers.GameController;
 import jakarta.websocket.ClientEndpoint;
-import jakarta.websocket.OnClose;
 import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
 import model.Notification;
 import websocket.messages.ServerMessage;
 
@@ -15,16 +13,15 @@ public class GameSocket {
 
     public GameSocket(GameController controller) {
         this.controller = controller;
-    }
-
-    @OnOpen
-    public void open() {
-        System.out.println("connected to server ...");
+        receive("beans");
     }
 
     @OnMessage
     public void receive(String ctx) {
         System.out.println("msg: " + ctx);
+        if (ctx.equals("beans")) {
+            return;
+        }
         var msg = new Gson().fromJson(ctx, ServerMessage.class);
         switch (msg.getServerMessageType()) {
             case LOAD_GAME -> {
@@ -38,9 +35,4 @@ public class GameSocket {
             }
         }
     }
-
-    @OnClose
-    public void close() {
-    }
-
 }
